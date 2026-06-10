@@ -1,0 +1,5 @@
+<view class="tab-bar">
+  <view class="tab-item {{selected === 0 ? 'active' : ''}}" bindtap="onTap" data-index="0">首页</view>
+  <view class="tab-item {{selected === 1 ? 'active' : ''}}" bindtap="onTap" data-index="1">牌局</view>
+  <view class="tab-item {{selected === 2 ? 'active' : ''}}" bindtap="onTap" data-index="2">我的</view>
+</view>

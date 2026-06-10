@@ -1,0 +1,6 @@
+<view class="qr-card">
+  <view class="qr-placeholder">
+    <text class="qr-text">扫码加入</text>
+  </view>
+  <text class="qr-hint">{{hint}}</text>
+</view>

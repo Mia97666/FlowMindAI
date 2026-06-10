@@ -1,0 +1,26 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/games/games",
+    "pages/profile/profile",
+    "pages/scoring/scoring",
+    "pages/groups/groups",
+    "pages/stats/stats",
+    "pages/scoreboard/scoreboard",
+    "pages/ranking/ranking"
+  ],
+  "window": {
+    "navigationStyle": "custom",
+    "backgroundColor": "#0F172A"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#94A3B8",
+    "selectedColor": "#15803D",
+    "list": [
+      { "pagePath": "pages/index/index", "text": "首页" },
+      { "pagePath": "pages/games/games", "text": "牌局" },
+      { "pagePath": "pages/profile/profile", "text": "我的" }
+    ]
+  }
+}

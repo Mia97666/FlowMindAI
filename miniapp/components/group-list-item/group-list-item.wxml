@@ -1,0 +1,9 @@
+<view class="group-item">
+  <view class="group-info">
+    <text class="group-name">{{name}}</text>
+    <text class="group-meta">{{memberCount}}人</text>
+  </view>
+  <view class="group-action">
+    <slot></slot>
+  </view>
+</view>

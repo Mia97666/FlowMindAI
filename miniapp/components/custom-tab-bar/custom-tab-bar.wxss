@@ -1,0 +1,12 @@
+.tab-bar {
+  display: flex; align-items: center; justify-content: space-evenly;
+  background: var(--color-card); border-top: 1px solid var(--color-border);
+  position: fixed; bottom: 0; left: 0; right: 0; height: 64px; z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tab-item {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--color-muted-fg); font-size: 16px; font-weight: 500;
+  padding: 10px 26px; border-radius: 22px; transition: all 0.2s;
+}
+.tab-item.active { background: var(--color-primary); color: #FFF; font-weight: 600; }

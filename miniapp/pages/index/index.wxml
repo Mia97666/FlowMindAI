@@ -1,0 +1,83 @@
+<!-- 首页 — 严格参考 index.html -->
+<view class="page-fade-in theme-root {{theme === 'light' ? 'theme-light' : ''}}">
+
+  <!-- 内容区 -->
+  <view class="home-content">
+
+    <!-- Hero -->
+    <view class="home-hero" style="padding-top:{{safeTop + 8}}px">
+      <text class="hero-h1">麻将计分</text>
+      <text class="hero-sub">好友对局，轻松计分</text>
+    </view>
+
+    <!-- 参与者头像 -->
+    <view class="scan-avatars">
+      <view class="avatar avatar-md" wx:for="{{scanned}}" wx:key="id" style="background:{{item.color}}">{{item.avatar}}</view>
+    </view>
+
+    <!-- 二维码卡片 -->
+    <view class="qr-card {{scanned.length > 0 ? 'has-scanners' : ''}}">
+      <view class="qr-code-box">
+        <view class="qr-placeholder">
+          <text class="qr-text">微信</text>
+          <text class="qr-text">扫一扫</text>
+          <text class="qr-text">加入</text>
+        </view>
+      </view>
+      <text class="qr-hint">{{scanned.length > 0 ? (scanned.length + 1) + '人已就位' : '微信扫一扫加入'}}</text>
+    </view>
+
+    <text class="sim-hint" wx:if="{{scanned.length < 3}}">💡 点击下方头像模拟扫码</text>
+
+    <!-- 模拟扫码按钮 -->
+    <view class="sim-btns">
+      <view class="avatar avatar-md" wx:for="{{nonScanned}}" wx:key="id" style="background:{{item.color}}" bindtap="simScan" data-id="{{item.id}}">{{item.avatar}}</view>
+    </view>
+
+    <!-- 台板 -->
+    <view class="setup-row">
+      <view class="toggle-label" bindtap="toggleFee">
+        <text class="toggle-text">台板</text>
+        <view class="toggle-track {{tableFee ? 'on' : ''}}">
+          <view class="toggle-thumb"></view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 创建按钮独立居中 -->
+    <button class="create-btn" bindtap="onCreate" disabled="{{scanCount < 1}}">创建新牌局</button>
+
+    <!-- 分割线 -->
+    <view class="divider"></view>
+
+    <!-- 固定小组 -->
+    <view class="group-header">
+      <text class="section-title">固定小组</text>
+      <text class="manage-link" bindtap="onManage">管理 ›</text>
+    </view>
+
+    <view wx:if="{{groups.length === 0}}" class="empty-state">
+      <text>暂无固定小组</text>
+      <text style="font-size:12px;margin-top:4px">创建牌局后可保存</text>
+    </view>
+
+    <view wx:for="{{groups}}" wx:key="id" class="group-card" bindtap="onGroupTap" data-id="{{item.id}}">
+      <view class="group-info">
+        <text class="group-name">{{item.name}}</text>
+        <text class="group-meta">{{item.members.length}}人 · {{item.date}}</text>
+      </view>
+      <view class="group-avs">
+        <view class="avatar avatar-sm" wx:for="{{item.avatarColors}}" wx:for-item="c" wx:for-index="j" wx:key="j" style="background:{{c}}">{{item.members[j]}}</view>
+      </view>
+      <view class="badge {{item.hasActiveGame ? 'badge-on' : 'badge-off'}}">{{item.hasActiveGame ? '进行中' : '空闲'}}</view>
+    </view>
+
+  </view>
+
+  <!-- Tab Bar -->
+  <view class="tab-bar">
+    <view class="tab-item active" bindtap="onTab" data-tab="index">首页</view>
+    <view class="tab-item {{tab === 'games' ? 'active' : ''}}" bindtap="onTab" data-tab="games">牌局</view>
+    <view class="tab-item {{tab === 'profile' ? 'active' : ''}}" bindtap="onTab" data-tab="profile">我的</view>
+  </view>
+</view>

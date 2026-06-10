@@ -1,0 +1,59 @@
+.page-header{display:flex;align-items:center;padding:12px var(--space-lg);min-height:44px;background:var(--color-bg);gap:12px}
+.back-btn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--color-muted);color:var(--color-card-fg);font-size:20px;font-weight:700}
+.title{font-size:17px;font-weight:700;flex:1}
+.content{padding:0 var(--space-lg);min-height:100vh;padding-bottom:100px}
+
+/* ★ 年/月筛选 */
+.filter-bar{display:flex;align-items:center;gap:8px;margin-bottom:var(--space-lg)}
+.filter-btn{font-size:13px;padding:6px 14px;border-radius:14px;background:var(--color-muted);color:var(--color-muted-fg);white-space:nowrap;font-weight:500}
+.filter-reset{font-size:13px;color:var(--color-danger);padding:6px 8px;font-weight:600}
+
+/* ★ 总分大卡片 */
+.sum-card{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:28px var(--space-xl);margin-bottom:var(--space-lg);
+  background:var(--color-card);border-radius:var(--radius-xl);box-shadow:var(--shadow-md);
+  border:1px solid var(--color-border);position:relative;overflow:hidden;
+}
+.sum-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  background:linear-gradient(90deg,var(--color-primary),var(--color-accent));
+}
+.sum-label{font-size:14px;color:var(--color-muted-fg);font-weight:600;letter-spacing:2px;margin-bottom:8px}
+.sum-value{font-size:42px;font-weight:900;font-family:var(--font-mono);line-height:1.1}
+
+/* ★ 统计项横排 */
+.stats-row{
+  display:flex;gap:var(--space-sm);margin-bottom:var(--space-xl);
+}
+.stat-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:var(--space-md) var(--space-sm);
+  background:var(--color-card);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);
+}
+.stat-val{font-size:20px;font-weight:800;font-family:var(--font-mono);display:block}
+.stat-lbl{font-size:11px;color:var(--color-muted-fg);margin-top:4px;white-space:nowrap}
+
+/* ★ 历史牌局 */
+.card{background:var(--color-card);border-radius:var(--radius-lg);padding:var(--space-lg);box-shadow:var(--shadow-sm);margin-bottom:var(--space-lg)}
+.card-top-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-md)}
+.card-title{font-size:17px;font-weight:700}
+.sort-btns{display:flex;gap:8px}
+.sort-btn{font-size:12px;padding:4px 10px;border-radius:10px;background:var(--color-muted);color:var(--color-muted-fg);font-weight:500}
+.sort-btn.active{background:var(--color-primary);color:#FFF}
+
+.h-item{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--color-border)}
+.h-item:last-child{border-bottom:none}
+.h-left{flex:1;min-width:0}
+.h-name{font-weight:600;font-size:15px;display:block}
+.h-meta{font-size:12px;color:var(--color-muted-fg);display:block;margin-top:3px}
+.h-score{font-size:20px;font-weight:800;font-family:var(--font-mono);margin-left:12px;flex-shrink:0}
+
+/* ★ 底部提示 */
+.footer-msg{text-align:center;padding:20px 0 12px;font-size:15px;color:var(--color-muted-fg);font-weight:500}
+
+/* ★ 分享按钮 */
+.share-btn{
+  width:80%;margin:0 auto 40px;height:48px;
+  font-size:16px;font-weight:700;border-radius:var(--radius-pill);
+}

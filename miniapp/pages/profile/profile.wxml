@@ -1,0 +1,89 @@
+<view class="page-fade-in theme-root {{theme === 'light' ? 'theme-light' : ''}}">
+  <view class="profile-safe" style="height:{{safeTop + 12}}px"></view>
+
+  <scroll-view scroll-y class="safe">
+
+    <!-- ★ 个人信息卡片 + 当日总分 + 今日排行 -->
+    <view class="profile-card">
+      <view class="avatar avatar-xl" style="background:var(--color-primary)">{{user.avatar}}</view>
+      <view style="flex:1">
+        <view style="display:flex;align-items:center;gap:8px">
+          <text class="pname">{{user.nickname}}</text>
+          <text class="edit-profile-btn" bindtap="onEditProfile">✎ 编辑资料</text>
+        </view>
+        <text class="pid">ID: M00001</text>
+        <view class="today-score-box">
+          <text class="today-label">今日总分</text>
+          <text class="today-val" style="color:{{todayScore === '暂无' ? 'var(--color-muted-fg)' : (todayScore.indexOf('+') === 0 ? 'var(--color-danger)' : 'var(--color-success)')}}">{{todayScore}}</text>
+        </view>
+        <view wx:if="{{todayRank}}" class="today-rank-box">
+          <text class="today-rank-label">今日好友排行</text>
+          <text class="today-rank-val">{{todayRank === 1 ? '冠军 👑' : todayRank + '名'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- ★ 麻神排行按钮 -->
+    <view class="menu-list">
+      <view class="menu-item" bindtap="goRanking">
+        <view class="ml">
+          <view class="mi" style="background:rgba(217,119,6,0.12);color:#D97706">
+            <image src="/svg/ranking.svg" class="mi-svg" mode="aspectFit"/>
+          </view>
+          麻神排行
+        </view>
+        <text class="ma">›</text>
+      </view>
+    </view>
+
+    <view class="menu-list">
+      <view class="menu-item" bindtap="onNav" data-page="stats">
+        <view class="ml"><view class="mi" style="background:rgba(21,128,61,0.12);color:var(--color-success)">
+          <image src="/svg/stats.svg" class="mi-svg" mode="aspectFit"/>
+        </view>个人战绩</view>
+        <text class="ma">›</text>
+      </view>
+      <view class="menu-item" bindtap="onNav" data-page="groups">
+        <view class="ml"><view class="mi" style="background:rgba(21,128,61,0.12);color:var(--color-success)">
+          <image src="/svg/group.svg" class="mi-svg" mode="aspectFit"/>
+        </view>固定小组管理</view>
+        <text class="ma">›</text>
+      </view>
+    </view>
+
+    <view class="menu-list">
+      <view class="menu-item" bindtap="onShare">
+        <view class="ml"><view class="mi" style="background:rgba(59,130,246,0.12);color:#3B82F6">
+          <image src="/svg/share.svg" class="mi-svg" mode="aspectFit"/>
+        </view>邀请好友</view>
+        <text class="ma">›</text>
+      </view>
+      <view class="menu-item">
+        <view class="ml"><view class="mi" style="background:rgba(168,85,247,0.12);color:#A855F7">
+          <image src="/svg/theme.svg" class="mi-svg" mode="aspectFit"/>
+        </view>页面风格</view>
+        <view class="theme-opts">
+          <text class="to {{themeMode === 'system' ? 'on' : ''}}" bindtap="onTheme" data-mode="system">跟随</text>
+          <text class="to {{themeMode === 'light' ? 'on' : ''}}" bindtap="onTheme" data-mode="light">☀️</text>
+          <text class="to {{themeMode === 'dark' ? 'on' : ''}}" bindtap="onTheme" data-mode="dark">🌙</text>
+        </view>
+      </view>
+      <view class="menu-item" bindtap="onAbout">
+        <view class="ml"><view class="mi" style="background:rgba(100,116,139,0.12);color:#64748B">
+          <image src="/svg/about.svg" class="mi-svg" mode="aspectFit"/>
+        </view>关于麻将计分</view>
+        <text class="ma">›</text>
+      </view>
+    </view>
+
+    <!-- ★ 底部调皮话 -->
+    <view class="footer-quote">🔥 烧烤与麻将才是绝配~</view>
+
+  </scroll-view>
+
+  <view class="tab-bar">
+    <view class="tab-item" bindtap="onTab" data-tab="index">首页</view>
+    <view class="tab-item" bindtap="onTab" data-tab="games">牌局</view>
+    <view class="tab-item active">我的</view>
+  </view>
+</view>

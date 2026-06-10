@@ -1,0 +1,24 @@
+.page-header{display:flex;align-items:center;padding:12px var(--space-lg);min-height:44px;background:var(--color-bg);gap:12px}
+.back-btn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--color-muted);color:var(--color-card-fg);font-size:20px;font-weight:700}
+.title{font-size:17px;font-weight:700;flex:1}
+.content{padding:0 var(--space-lg);min-height:100vh}
+.gm_item{display:flex;align-items:center;padding:var(--space-md) var(--space-lg);background:var(--color-card);border-radius:var(--radius-md);gap:var(--space-md);margin-bottom:var(--space-sm);box-shadow:var(--shadow-sm)}
+.gm-info{flex:1;min-width:0}
+.edit-btn{font-size:12px;color:var(--color-primary);font-weight:600}
+.closed-badge{display:flex;align-items:center;gap:4px;background:var(--color-muted);color:var(--color-muted-fg);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+
+/* ★ 最终成绩 — 放大版 */
+.card-title-lg { font-size: 20px; font-weight: 700; }
+.mb-lg { margin-bottom: 20px; }
+.final-scores{display:flex;justify-content:space-around;text-align:center;padding:var(--space-xl) 0}
+.fs-item{text-align:center}
+.fs-val{font-size:26px;font-weight:800;font-family:var(--font-mono);display:block;margin-top:4px}
+
+/* ★ 对局历史 — 优化排版 */
+.history-header{padding-bottom:var(--space-xl);border-bottom:1px solid var(--color-border);margin-bottom:var(--space-xl)}
+.history-round{padding:var(--space-md) 0}
+.history-round:not(:last-child){border-bottom:1px solid var(--color-border)}
+.round-info{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.round-scores{display:flex;justify-content:space-between;gap:var(--space-sm)}
+/* ★ 去掉背景框，放大字体 */
+.round-score-lg{flex:1;text-align:center;font-family:var(--font-mono);font-size:18px;font-weight:700;padding:8px 6px;border-radius:6px}

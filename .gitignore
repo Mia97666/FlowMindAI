@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+miniprogram_npm/
+
+# Build artifacts
+backend/data/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+.env.local
+.env.production
+*.pem
+*_deploy_key
+*_deploy_key.pub
+github账号密码.txt
+
+# WeChat DevTools
+project.private.config.json
+
+# Logs
+*.log
+npm-debug.log*
+
+# WorkBuddy
+.workbuddy/

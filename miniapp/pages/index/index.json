@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "player-avatar": "/components/player-avatar/player-avatar",
+    "qr-card": "/components/qr-card/qr-card",
+    "group-list-item": "/components/group-list-item/group-list-item",
+    "custom-tab-bar": "/components/custom-tab-bar/custom-tab-bar"
+  },
+  "navigationStyle": "custom"
+}

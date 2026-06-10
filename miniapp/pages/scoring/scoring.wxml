@@ -1,0 +1,118 @@
+<!-- 计分页 -->
+<view class="page-fade-in theme-root {{theme === 'light' ? 'theme-light' : ''}}">
+
+  <!-- 顶部导航 -->
+  <view class="page-header" style="padding-top:{{safeTop}}px">
+    <view class="back-btn" bindtap="onBack">←</view>
+    <text class="title">{{roomName}}</text>
+    <view></view>
+  </view>
+
+  <!-- Tab 切换 -->
+  <view class="scoring-tabs">
+    <view class="scoring-tab {{currentTab === 'rounds' ? 'active' : ''}} {{rounds.length === 0 ? 'locked' : ''}}" bindtap="onTabTap" data-tab="rounds">
+      对局<text class="tab-lock" wx:if="{{rounds.length === 0}}">🔒</text>
+    </view>
+    <view class="scoring-tab {{currentTab === 'input' ? 'active' : ''}}" bindtap="onTabTap" data-tab="input">计分</view>
+  </view>
+
+  <scroll-view scroll-y class="scoring-content" wx:if="{{room}}">
+
+    <!-- 对局 Tab -->
+    <view wx:if="{{currentTab === 'rounds'}}">
+
+      <!-- 倍率 -->
+      <view class="multiplier-bar">
+        <text style="font-size:14px;font-weight:500">倍率</text>
+        <view class="toggle-track {{multEnabled ? 'on' : ''}}" bindtap="toggleMult">
+          <view class="toggle-thumb"></view>
+        </view>
+        <input class="mult-inp" type="text" value="{{multiplier}}" bindinput="onMultInput" disabled="{{!multEnabled}}" placeholder="1.0" />
+      </view>
+
+      <!-- 总分排行 ★ 放大版 -->
+      <view class="card">
+        <text class="card-title-lg mb-lg" style="text-align:center">🏆 总分排行</text>
+        <view class="rank-list">
+          <view class="rank-item-lg" wx:for="{{ranked}}" wx:key="id">
+            <text class="rank-num-lg">{{index === 0 ? '👑' : '#' + (index + 1)}}</text>
+            <view class="avatar avatar-lg" style="background:{{item.color}}">{{item.avatar}}</view>
+            <text style="font-size:17px;font-weight:600;flex:1">{{item.name}}</text>
+            <text class="rank-score-lg" style="color:{{item.displayScore >= 0 ? 'var(--color-danger)' : 'var(--color-success)'}}">{{item.displayScoreStr}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 对局历史 ★ 优化排版 -->
+      <view class="card">
+        <text class="card-title-lg history-title">📋 对局历史</text>
+        <view wx:if="{{rounds.length === 0}}" class="empty-state" style="padding:var(--space-xl)">
+          <text>暂无对局记录</text>
+        </view>
+        <view wx:else>
+          <view class="history-header">
+            <view style="display:flex;justify-content:space-around">
+              <view class="avatar avatar-md" wx:for="{{players}}" wx:key="id" style="background:{{item.color}}">{{item.avatar}}</view>
+            </view>
+          </view>
+          <view class="history-round" wx:for="{{rounds}}" wx:key="roundNumber">
+            <view class="round-info">
+              <text style="font-weight:600;font-size:14px">第{{item.roundNumber}}局</text>
+              <text style="font-size:13px;color:var(--color-muted-fg)">{{item.timeStr}}</text>
+            </view>
+            <view class="round-scores">
+              <view class="round-score-lg" wx:for="{{players}}" wx:for-item="p" wx:key="id" style="color:{{(item.displayScores[p.id]||0) > 0 ? 'var(--color-danger)' : (item.displayScores[p.id]||0) < 0 ? 'var(--color-success)' : 'var(--color-muted-fg)'}};border-bottom:3px solid {{p.color}}">
+                {{item.displayScoreStrs[p.id]}}
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <button class="btn btn-secondary btn-block" bindtap="onShare">📸 截图分享</button>
+    </view>
+
+    <!-- 计分 Tab -->
+    <view wx:if="{{currentTab === 'input'}}">
+      <view class="scoring-table">
+        <view class="table-header">
+          <view class="col-name"><text>玩家</text></view>
+          <view class="col-result"><text>胜负</text></view>
+          <view class="col-score"><text>得分</text></view>
+        </view>
+
+        <view class="table-row" wx:for="{{inputs}}" wx:key="pid">
+          <view class="col-name">
+            <view class="avatar avatar-md" style="background:{{item.color}}">{{item.avatar}}</view>
+            <text wx:if="{{item.isBanker}}" style="font-size:11px;font-weight:600;margin-left:4px;color:var(--color-muted-fg)">庄家</text>
+          </view>
+          <view class="col-result">
+            <view wx:if="{{item.isBanker}}" style="font-size:12px;color:var(--color-muted-fg)">（自动推算）</view>
+            <view wx:else class="radio-group">
+              <view class="radio-btn win {{item.result === 'win' ? 'selected' : ''}}" bindtap="onResult" data-pid="{{item.pid}}" data-result="win">赢</view>
+              <view class="radio-btn lose {{item.result === 'lose' ? 'selected' : ''}}" bindtap="onResult" data-pid="{{item.pid}}" data-result="lose">输</view>
+            </view>
+          </view>
+          <view class="col-score">
+            <input class="score-inp" type="number" value="{{item.score || ''}}" data-pid="{{item.pid}}" bindinput="onScoreInp" placeholder="分数"/>
+            <view class="reset-btn" bindtap="onReset" data-pid="{{item.pid}}">↺</view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ★ 放大确认按钮 -->
+      <button class="btn btn-primary btn-confirm" bindtap="onConfirm">✓ 确认本局分数</button>
+
+      <view style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn btn-accent" style="flex:1" bindtap="onCloseGame">收盘</button>
+        <button class="btn btn-secondary" style="flex:1" bindtap="onSaveGroup" wx:if="{{!isGroup}}">我们是固定搭子</button>
+      </view>
+    </view>
+
+  </scroll-view>
+
+  <!-- 加号按钮 — 固定右下角（必须在 scroll-view 外） -->
+  <view class="add-player-btn" bindtap="onAddPlayer">
+    <text style="font-size:28px;line-height:1">＋</text>
+  </view>
+</view>
