@@ -1,8 +1,0 @@
-{
-  "name": "mahjong-scorer-miniapp",
-  "version": "1.0.0",
-  "description": "麻将计分 微信小程序",
-  "dependencies": {
-    "tdesign-miniprogram": "^1.15.1"
-  }
-}

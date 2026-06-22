@@ -1,4 +1,0 @@
-appID
-wxdf574788c3e26e15
-secret
-a7cc765b03c65507fd11e7e581dabab7

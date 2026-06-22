@@ -1,0 +1,25 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+dashscope:
+  api-key: ${DASHSCOPE_API_KEY:}
+  model: qwen-plus
+  embedding-model: text-embedding-v4
+  embedding-url: https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings
+  embedding-dimensions: 1024
+  rerank-model: qwen3-rerank
+  rerank-url: https://dashscope.aliyuncs.com/compatible-api/v1/reranks
+
+qdrant:
+  host: localhost
+  port: 6334
+  collection-name: flowmind_knowledge
+
+flowmind:
+  upload-dir: ./data/uploads
+  chunk:
+    size: 500
+    overlap: 100
