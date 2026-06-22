@@ -12,6 +12,7 @@ fi
 
 APP_DIR="${APP_DIR:-$DEFAULT_APP_DIR}"
 SERVER_HOST="${SERVER_HOST:-150.158.119.197}"
+PUBLIC_SITE_URL="${PUBLIC_SITE_URL:-http://$SERVER_HOST}"
 WEB_PORT="${WEB_PORT:-5173}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 RUN_DIR="$APP_DIR/run"
@@ -33,5 +34,6 @@ if command -v docker >/dev/null 2>&1; then
   docker ps --filter "name=flowmind-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 fi
 
+echo "Public site: $PUBLIC_SITE_URL"
 echo "Frontend: http://$SERVER_HOST:$WEB_PORT"
 echo "Backend health: http://$SERVER_HOST:$BACKEND_PORT/api/health"
