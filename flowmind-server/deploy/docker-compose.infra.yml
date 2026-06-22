@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: flowmind-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-flowmind}
+      POSTGRES_USER: ${DB_USERNAME:-flowmind}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-flowmind123}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - ${APP_DIR:-/opt/flowmind/FlowMindAI}/data/postgres:/var/lib/postgresql/data
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: flowmind-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "6334:6334"
+    volumes:
+      - ${APP_DIR:-/opt/flowmind/FlowMindAI}/data/qdrant:/qdrant/storage
