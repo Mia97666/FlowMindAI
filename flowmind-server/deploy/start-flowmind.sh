@@ -12,7 +12,8 @@ fi
 
 APP_DIR="${APP_DIR:-$DEFAULT_APP_DIR}"
 SERVER_HOST="${SERVER_HOST:-150.158.119.197}"
-PUBLIC_API_BASE_URL="${PUBLIC_API_BASE_URL:-http://$SERVER_HOST:8080}"
+PUBLIC_SITE_URL="${PUBLIC_SITE_URL:-http://$SERVER_HOST}"
+PUBLIC_API_BASE_URL="${PUBLIC_API_BASE_URL:-$PUBLIC_SITE_URL}"
 WEB_PORT="${WEB_PORT:-5173}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
@@ -31,6 +32,16 @@ LOG_DIR="$APP_DIR/logs"
 RUN_DIR="$APP_DIR/run"
 mkdir -p "$LOG_DIR" "$RUN_DIR" "$UPLOAD_DIR"
 
+JAVA_BIN="${JAVA_BIN:-java}"
+JAVA21_HOME="$(ls -d /usr/lib/jvm/java-21-openjdk* 2>/dev/null | head -1 || true)"
+if [[ -n "${JAVA_HOME:-}" && -x "$JAVA_HOME/bin/java" ]]; then
+  JAVA_BIN="$JAVA_HOME/bin/java"
+elif [[ -n "$JAVA21_HOME" && -x "$JAVA21_HOME/bin/java" ]]; then
+  export JAVA_HOME="$JAVA21_HOME"
+  export PATH="$JAVA_HOME/bin:$PATH"
+  JAVA_BIN="$JAVA_HOME/bin/java"
+fi
+
 compose() {
   if docker compose version >/dev/null 2>&1; then
     docker compose "$@"
@@ -45,6 +56,9 @@ wait_port() {
   local name="$3"
   for _ in {1..60}; do
     if command -v nc >/dev/null 2>&1 && nc -z "$host" "$port" >/dev/null 2>&1; then
+      return 0
+    fi
+    if timeout 1 bash -c "cat < /dev/null > /dev/tcp/$host/$port" >/dev/null 2>&1; then
       return 0
     fi
     sleep 1
@@ -73,8 +87,12 @@ wait_port "$QDRANT_HOST" "$QDRANT_PORT" "Qdrant"
 
 echo "Building backend..."
 cd "$APP_DIR/flowmind-server"
-chmod +x ./mvnw
-./mvnw -q -DskipTests package
+if [[ -f ./.mvn/wrapper/maven-wrapper.properties ]]; then
+  chmod +x ./mvnw
+  ./mvnw -q -DskipTests package
+else
+  mvn -q -DskipTests package
+fi
 
 BACKEND_JAR="$(ls -1 target/*.jar | grep -v 'original-' | head -1)"
 if [[ -z "$BACKEND_JAR" ]]; then
@@ -102,7 +120,7 @@ nohup env \
   UPLOAD_DIR="$UPLOAD_DIR" \
   DASHSCOPE_API_KEY="${DASHSCOPE_API_KEY:-}" \
   RAG_RATE_LIMIT_ENABLED="$RAG_RATE_LIMIT_ENABLED" \
-  java $JAVA_OPTS -jar "$BACKEND_JAR" \
+  "$JAVA_BIN" $JAVA_OPTS -jar "$BACKEND_JAR" \
   > "$LOG_DIR/backend.log" 2>&1 &
 echo $! > "$RUN_DIR/backend.pid"
 
@@ -127,6 +145,7 @@ nohup npm run preview -- --host 0.0.0.0 --port "$WEB_PORT" \
 echo $! > "$RUN_DIR/frontend.pid"
 
 echo "FlowMind AI is starting."
+echo "Public site: $PUBLIC_SITE_URL"
 echo "Frontend: http://$SERVER_HOST:$WEB_PORT"
 echo "Backend health: http://$SERVER_HOST:$BACKEND_PORT/api/health"
 echo "Logs: $LOG_DIR/backend.log, $LOG_DIR/frontend.log"
