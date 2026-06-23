@@ -102,7 +102,6 @@
 import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { Bell, Operation } from '@element-plus/icons-vue'
-import * as echarts from 'echarts'
 import { useSharedState } from '../composables/useSharedState'
 import { riskTagType } from '../utils/helpers'
 import { loadNotifications, markRead } from '../api/notification'
@@ -116,6 +115,14 @@ const trendChartRef = ref(null)
 const pieChartRef = ref(null)
 let trendChart = null
 let pieChart = null
+let echartsModule = null
+
+async function loadEcharts() {
+  if (!echartsModule) {
+    echartsModule = await import('echarts')
+  }
+  return echartsModule
+}
 
 function getTimeRangeStart() {
   const now = new Date()
@@ -203,7 +210,8 @@ function buildPieData() {
   return Object.entries(statusCount).map(([name, value]) => ({ name, value }))
 }
 
-function initCharts() {
+async function initCharts() {
+  const echarts = await loadEcharts()
   if (trendChartRef.value) {
     trendChart = echarts.init(trendChartRef.value)
     updateTrendChart()

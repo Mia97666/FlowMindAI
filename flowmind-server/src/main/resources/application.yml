@@ -18,3 +18,11 @@ management:
     web:
       exposure:
         include: health,info
+
+flowmind:
+  rag:
+    # 测试阶段 RAG 调用限流，关闭后不限流
+    rate-limit:
+      enabled: true
+      # 每天全局最大调用次数（非按用户）
+      daily-limit: 5

@@ -13,10 +13,11 @@
 
 <script setup>
 import { Loading } from '@element-plus/icons-vue'
+import { DEFAULT_LOADING_TEXT } from '../composables/useLoading'
 
 defineProps({
   visible: { type: Boolean, default: false },
-  text: { type: String, default: '加载中...' },
+  text: { type: String, default: DEFAULT_LOADING_TEXT },
 })
 </script>
 

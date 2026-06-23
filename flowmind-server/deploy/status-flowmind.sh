@@ -28,12 +28,20 @@ show_pid() {
 }
 
 show_pid "backend" "$RUN_DIR/backend.pid"
-show_pid "frontend" "$RUN_DIR/frontend.pid"
+if command -v nginx >/dev/null 2>&1; then
+  if pgrep -x nginx >/dev/null 2>&1; then
+    echo "frontend: served by nginx"
+  else
+    echo "frontend: nginx is not running"
+  fi
+else
+  show_pid "frontend" "$RUN_DIR/frontend.pid"
+fi
 
 if command -v docker >/dev/null 2>&1; then
   docker ps --filter "name=flowmind-" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 fi
 
 echo "Public site: $PUBLIC_SITE_URL"
-echo "Frontend: http://$SERVER_HOST:$WEB_PORT"
+echo "Frontend: $PUBLIC_SITE_URL"
 echo "Backend health: http://$SERVER_HOST:$BACKEND_PORT/api/health"

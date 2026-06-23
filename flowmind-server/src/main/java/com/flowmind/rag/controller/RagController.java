@@ -4,6 +4,7 @@ import com.flowmind.rag.adapter.RagKnowledgeAdapter;
 import com.flowmind.rag.adapter.RagKnowledgeAdapterFactory;
 import com.flowmind.rag.dto.RagRequest;
 import com.flowmind.rag.dto.RagResponse;
+import com.flowmind.rag.service.impl.RagRateLimiter;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,9 +24,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class RagController {
 
     private final RagKnowledgeAdapterFactory adapterFactory;
+    private final RagRateLimiter ragRateLimiter;
 
     @PostMapping
     public RagResponse ragChat(@Valid @RequestBody RagRequest request) {
+        // 测试阶段限流：检查并累加当日 RAG 调用配额，超限抛 BusinessException
+        ragRateLimiter.checkAndIncrement();
+
         // 按 adapterType 选择知识库实现，默认 SELF
         RagKnowledgeAdapter adapter = adapterFactory.get(request.getAdapterType());
 

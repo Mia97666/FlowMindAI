@@ -1,15 +1,22 @@
 import { ref } from 'vue'
 
+export const DEFAULT_LOADING_TEXT = '服务器资源紧张，正在努力加载中……'
+
 export function useLoading() {
   const loadingVisible = ref(false)
-  const loadingText = ref('加载中...')
+  const loadingText = ref(DEFAULT_LOADING_TEXT)
   let loadingTimer = null
 
-  function show(text = '加载中...') {
+  function show(text = DEFAULT_LOADING_TEXT, delay = 500) {
+    if (loadingTimer) {
+      clearTimeout(loadingTimer)
+      loadingTimer = null
+    }
     loadingText.value = text
     loadingTimer = setTimeout(() => {
       loadingVisible.value = true
-    }, 500)
+      loadingTimer = null
+    }, delay)
   }
 
   function hide() {

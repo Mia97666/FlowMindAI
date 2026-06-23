@@ -3,12 +3,33 @@
     <div class="designer-toolbar">
       <div class="toolbar-primary">
         <el-button @click="newWorkflow">+ 默认流程</el-button>
-        <el-button type="primary" :icon="DocumentChecked" @click="saveWorkflow">保存</el-button>
+        <el-button :icon="Upload" @click="bpmnImportVisible = true">导入 BPMN</el-button>
+        <el-button :icon="Document" @click="openBpmnPreview">BPMN 预览</el-button>
         <el-button :icon="Operation" @click="validateWorkflow">发布前校验</el-button>
         <el-button :icon="SwitchButton" @click="publishWorkflowAction" :disabled="!selectedWorkflowId">发布</el-button>
         <el-button :icon="CircleClose" @click="disableWorkflowAction" :disabled="!selectedWorkflowId">停用</el-button>
-        <el-button :icon="Document" @click="openBpmnPreview">BPMN 预览</el-button>
-        <el-button :icon="Upload" @click="bpmnImportVisible = true">导入 BPMN</el-button>
+        <el-button type="primary" :icon="DocumentChecked" @click="saveWorkflow">保存</el-button>
+      </div>
+      <div class="toolbar-workflow-selector">
+        <span class="workflow-selector-label">当前流程</span>
+        <el-select
+          v-model="selectedWorkflowId"
+          filterable
+          clearable
+          placeholder="请选择流程"
+          class="workflow-selector"
+          @change="onWorkflowSelectChange"
+        >
+          <el-option
+            v-for="item in workflows"
+            :key="item.id"
+            :label="`${item.name}（${item.code}）`"
+            :value="item.id"
+          />
+        </el-select>
+        <el-tag v-if="selectedWorkflow" :type="workflowStatusTagType(selectedWorkflow.status)" effect="plain" size="small">
+          {{ workflowStatusLabel(selectedWorkflow.status) }}
+        </el-tag>
       </div>
     </div>
 
@@ -358,7 +379,7 @@ import {
 } from '@element-plus/icons-vue'
 import { useSharedState } from '../composables/useSharedState'
 import { nodePalette, fieldPermissionOptions } from '../config/constants'
-import { parseFormSchema, parseJson, nodeTypeLabel, nodeClass, hasSourceHandle, hasTargetHandle, nodeNeedsForm, nodeAllowsFieldPermission } from '../utils/helpers'
+import { parseFormSchema, parseJson, nodeTypeLabel, nodeClass, hasSourceHandle, hasTargetHandle, nodeNeedsForm, nodeAllowsFieldPermission, workflowStatusLabel, workflowStatusTagType } from '../utils/helpers'
 import { buildBpmnXml, parseBpmnXml } from '../utils/workflowBpmn'
 import { loadWorkflows as fetchWorkflows, createWorkflow, updateWorkflow, publishWorkflow, disableWorkflow } from '../api/workflow'
 
@@ -383,6 +404,16 @@ const bpmnImportXml = ref('')
 const bpmnParsing = ref(false)
 
 const selectedNode = computed(() => flowNodes.value.find((node) => node.id === selectedNodeId.value))
+
+const selectedWorkflow = computed(() => workflows.value.find((item) => item.id === selectedWorkflowId.value) || null)
+
+function onWorkflowSelectChange(id) {
+  if (id) {
+    selectWorkflow(id)
+  } else {
+    selectedWorkflowId.value = null
+  }
+}
 
 const connectableSourceNodes = computed(() => flowNodes.value.filter((node) => hasSourceHandle(node.data.nodeType)))
 const connectableTargetNodes = computed(() => flowNodes.value.filter((node) => hasTargetHandle(node.data.nodeType) && node.id !== quickEdge.source))
@@ -799,6 +830,12 @@ onMounted(async () => {
     if (!isNaN(id) && workflows.value.find((w) => w.id === id)) {
       selectedWorkflowId.value = id
       selectWorkflow(id)
+    }
+  } else {
+    const defaultWorkflow = workflows.value.find((w) => w.name === '报销审批流程')
+    if (defaultWorkflow) {
+      selectedWorkflowId.value = defaultWorkflow.id
+      selectWorkflow(defaultWorkflow.id)
     }
   }
 })

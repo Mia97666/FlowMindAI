@@ -105,13 +105,13 @@ public class WorkflowGraphParser {
             edge.setId(asText(rawEdge.get("id")));
             edge.setSource(asText(rawEdge.get("source")));
             edge.setTarget(asText(rawEdge.get("target")));
-            edge.setCondition(firstNotBlank(
+            String label = firstNotBlank(asText(rawEdge.get("label")), asText(data.get("label")));
+            String condition = firstNotBlank(
                     asText(rawEdge.get("condition")),
-                    asText(rawEdge.get("label")),
-                    asText(data.get("condition")),
-                    asText(data.get("label"))
-            ));
-            edge.setLabel(firstNotBlank(asText(rawEdge.get("label")), asText(data.get("label"))));
+                    asText(data.get("condition"))
+            );
+            edge.setCondition(condition != null ? condition : conditionFromLabel(label));
+            edge.setLabel(label);
 
             if (edge.getSource() != null && edge.getTarget() != null) {
                 edges.add(edge);
@@ -175,6 +175,21 @@ public class WorkflowGraphParser {
             if (value != null && !value.isBlank()) {
                 return value;
             }
+        }
+        return null;
+    }
+
+    private String conditionFromLabel(String label) {
+        if (label == null || label.isBlank()) {
+            return null;
+        }
+        String normalized = label.trim();
+        if ("default".equalsIgnoreCase(normalized)
+                || "else".equalsIgnoreCase(normalized)
+                || "true".equalsIgnoreCase(normalized)
+                || "默认".equals(normalized)
+                || normalized.matches("^[a-zA-Z0-9_.]+\\s*(>=|<=|==|!=|>|<)\\s*.+$")) {
+            return normalized;
         }
         return null;
     }

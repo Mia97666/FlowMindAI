@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Search } from '@element-plus/icons-vue'
 import { useSharedState } from '../composables/useSharedState'
@@ -245,4 +245,6 @@ async function saveUserRoles() {
   ElMessage.success('角色已更新')
   await load()
 }
+
+onMounted(() => load())
 </script>

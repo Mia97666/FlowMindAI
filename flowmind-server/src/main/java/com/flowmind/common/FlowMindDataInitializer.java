@@ -289,7 +289,9 @@ public class FlowMindDataInitializer implements CommandLineRunner {
                 ? ""
                 : definition.getDefinitionJson();
         if (currentJson.contains("e_low_auto")
-                && currentJson.contains("autoApproveMaxScore")) {
+                && currentJson.contains("autoApproveMaxScore")
+                && currentJson.contains("riskLevel == \\\"HIGH\\\"")
+                && currentJson.contains("riskLevel == \\\"LOW\\\"")) {
             return false;
         }
 
@@ -335,8 +337,8 @@ public class FlowMindDataInitializer implements CommandLineRunner {
                   "edges": [
                     {"id":"e_start_ai","source":"start","target":"ai_risk"},
                     {"id":"e_ai_gateway","source":"ai_risk","target":"risk_gateway"},
-                    {"id":"e_high","source":"risk_gateway","target":"finance_approve","condition":"riskLevel == \"HIGH\"","label":"高风险人工审批"},
-                    {"id":"e_low_auto","source":"risk_gateway","target":"notify_done","condition":"riskLevel == \"LOW\"","label":"低风险AI自动通过"},
+                    {"id":"e_high","source":"risk_gateway","target":"finance_approve","condition":"riskLevel == \\\"HIGH\\\"","label":"高风险人工审批"},
+                    {"id":"e_low_auto","source":"risk_gateway","target":"notify_done","condition":"riskLevel == \\\"LOW\\\"","label":"低风险AI自动通过"},
                     {"id":"e_medium","source":"risk_gateway","target":"manager_approve","condition":"default","label":"中风险人工审批"},
                     {"id":"e_finance_notify","source":"finance_approve","target":"notify_done"},
                     {"id":"e_manager_notify","source":"manager_approve","target":"notify_done"},

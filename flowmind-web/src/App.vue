@@ -15,7 +15,8 @@ import { useDebounce } from './composables/useDebounce'
 import { fallbackMenuTree } from './config/menuTree'
 import { sectionTitleMap } from './config/constants'
 import { workflowCategory, workflowStatusLabel, workflowStatusTagType, formStatusLabel, formStatusTagType, parseFormSchema, parseJson, parseControlOptions, riskTagType, flattenMenus, menuPathLabel } from './utils/helpers'
-import { api as baseApi } from './api/index'
+import { api as baseApi, hasActiveVisibleRequests, onGlobalLoadingChange } from './api/index'
+import { preloadRoute } from './router/preload'
 import { loadUsers, loadUserPage, createUser, updateUser, updateUserRoles } from './api/user'
 import { loadRoles, loadRolePage, createRole, updateRole } from './api/role'
 import { loadMenuTree, loadPermissionMenuTree, loadAllMenuTree, loadRoleMenus, saveRoleMenus, createMenu, updateMenu, disableMenu, enableMenu } from './api/menu'
@@ -202,8 +203,20 @@ function handleSelectTopMenu(menu) {
   }
 }
 
-function handleSideNavigate(routeKey) {
-  router.push(routeKeyToPath(routeKey))
+async function handleSideNavigate(routeKey) {
+  const targetPath = routeKeyToPath(routeKey)
+  showLoading(undefined, 0)
+  const loadingFallbackTimer = setTimeout(() => {
+    hideLoading()
+  }, 12000)
+  const preloadPromise = preloadRoute(routeKey, { currentUser: currentUser.value })
+  try {
+    await router.push(targetPath)
+    await preloadPromise
+  } finally {
+    clearTimeout(loadingFallbackTimer)
+    hideLoading()
+  }
 }
 
 function handleUserChange(username) {
@@ -213,7 +226,14 @@ function handleUserChange(username) {
 
 function routeKeyToPath(routeKey) {
   const route = router.getRoutes().find((r) => r.meta?.routeKey === routeKey)
-  return route?.path || '/dashboard'
+  return materializeRoutePath(route?.path || '/dashboard')
+}
+
+function materializeRoutePath(path) {
+  const normalized = String(path || '/dashboard')
+    .replace(/\/:[^/]+\?/g, '')
+    .replace(/\/:[^/]+/g, '')
+  return normalized || '/'
 }
 
 function findFirstPage(menu) {
@@ -253,38 +273,19 @@ async function openGlobalSearchResult(item) {
 // ---- Data loading ----
 async function refreshAll() {
   const results = await Promise.allSettled([
-    loadUsers(), loadUserPage(userPagination.page, userPagination.size, userFilters),
-    loadRoles(), loadRolePage(rolePagination.page, rolePagination.size, roleFilters),
-    loadWorkflows(), loadInstances(), loadTodos(currentUser.value),
-    loadTodoTasks(currentUser.value), loadDoneTasks(currentUser.value),
-    loadNotifications(currentUser.value), loadMenus(currentUser.value), loadFields(),
-    loadForms(), loadDocuments(), loadKnowledgeConfig(),
+    loadUsers(), loadWorkflows(), loadInstances(), loadTodos(currentUser.value),
+    loadDoneTasks(currentUser.value), loadNotifications(currentUser.value), loadMenus(currentUser.value),
   ])
-  const [usersR, userPageR, rolesR, rolePageR, workflowsR, instancesR,
-    todosR, todoTasksR, doneTasksR, notificationsR, menusR, fieldsR,
-    formsR, documentsR, knowledgeConfigR] = results
+  const [usersR, workflowsR, instancesR, todosR, doneTasksR, notificationsR] = results
   if (usersR.status === 'fulfilled') users.value = usersR.value
-  if (userPageR.status === 'fulfilled' && userPageR.value) {
-    userPageRows.value = userPageR.value.records || userPageR.value.content || userPageR.value
-    userPagination.total = userPageR.value.total || userPageR.value.totalElements || userPageRows.value.length
-  }
-  if (rolesR.status === 'fulfilled') roles.value = rolesR.value
-  if (rolePageR.status === 'fulfilled' && rolePageR.value) {
-    rolePageRows.value = rolePageR.value.records || rolePageR.value.content || rolePageR.value
-    rolePagination.total = rolePageR.value.total || rolePageR.value.totalElements || rolePageRows.value.length
-  }
   if (workflowsR.status === 'fulfilled') workflows.value = workflowsR.value
   if (instancesR.status === 'fulfilled') instances.value = instancesR.value
-  if (todosR.status === 'fulfilled') todos.value = todosR.value || []
-  if (todoTasksR.status === 'fulfilled') todoTasks.value = todoTasksR.value || []
+  if (todosR.status === 'fulfilled') {
+    todos.value = todosR.value || []
+    todoTasks.value = todosR.value || []
+  }
   if (doneTasksR.status === 'fulfilled') doneTasks.value = doneTasksR.value || []
   if (notificationsR.status === 'fulfilled') notifications.value = notificationsR.value || []
-  if (fieldsR.status === 'fulfilled') fields.value = fieldsR.value || []
-  if (formsR.status === 'fulfilled') forms.value = formsR.value || []
-  if (documentsR.status === 'fulfilled') documents.value = documentsR.value || []
-  if (knowledgeConfigR.status === 'fulfilled' && knowledgeConfigR.value) {
-    Object.assign(knowledgeConfig, knowledgeConfigR.value)
-  }
 }
 
 async function refreshUserScopedData() {
@@ -304,15 +305,21 @@ async function refreshUserScopedData() {
 
 async function loadMenus(username = currentUser.value) {
   menuTree.value = await loadMenuTree(username)
-  permissionMenuTree.value = await loadPermissionMenuTree()
-  menuManageTree.value = await loadAllMenuTree()
 }
 
 // ---- Lifecycle ----
 let healthTimer = null
 let notificationTimer = null
+let stopGlobalLoading = null
 
 onMounted(async () => {
+  stopGlobalLoading = onGlobalLoadingChange(({ visible, text }) => {
+    if (visible) {
+      showLoading(text, 0)
+    } else {
+      hideLoading()
+    }
+  })
   await refreshAll()
   try {
     await baseApi('/api/health', { silent: true })
@@ -321,17 +328,20 @@ onMounted(async () => {
     backendHealthy.value = false
   }
   healthTimer = setInterval(async () => {
-    try { await baseApi('/api/health', { silent: true }); backendHealthy.value = true } catch { backendHealthy.value = false }
+    if (document.hidden || hasActiveVisibleRequests()) return
+    try { await baseApi('/api/health', { silent: true, timeoutMs: 5000 }); backendHealthy.value = true } catch { backendHealthy.value = false }
   }, 30000)
   notificationTimer = setInterval(async () => {
+    if (document.hidden || hasActiveVisibleRequests()) return
     try {
-      const result = await loadNotifications(currentUser.value)
+      const result = await loadNotifications(currentUser.value, { silent: true, timeoutMs: 5000 })
       if (result) notifications.value = result
     } catch { /* 静默刷新 */ }
   }, 60000)
 })
 
 onBeforeUnmount(() => {
+  stopGlobalLoading?.()
   if (healthTimer) clearInterval(healthTimer)
   if (notificationTimer) clearInterval(notificationTimer)
 })

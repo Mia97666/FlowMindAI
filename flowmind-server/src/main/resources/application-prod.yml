@@ -23,3 +23,7 @@ flowmind:
   chunk:
     size: 500
     overlap: 100
+  rag:
+    rate-limit:
+      enabled: ${RAG_RATE_LIMIT_ENABLED:true}
+      daily-limit: ${RAG_DAILY_LIMIT:10}

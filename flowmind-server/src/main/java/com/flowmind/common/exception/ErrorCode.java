@@ -33,7 +33,12 @@ public enum ErrorCode {
     /**
      * RAG 回答生成失败。
      */
-    RAG_GENERATE_FAILED(50003, HttpStatus.INTERNAL_SERVER_ERROR, "RAG 回答生成失败");
+    RAG_GENERATE_FAILED(50003, HttpStatus.INTERNAL_SERVER_ERROR, "RAG 回答生成失败"),
+
+    /**
+     * RAG 调用次数超出当日上限。
+     */
+    RAG_RATE_LIMIT_EXCEEDED(50004, HttpStatus.TOO_MANY_REQUESTS, "今日 RAG 调用次数已达上限");
 
     private final int code;
 

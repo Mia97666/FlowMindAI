@@ -131,6 +131,7 @@ public class AiRiskCheckServiceImpl implements AiRiskCheckService {
 
             String json = chatService.chat(prompt).trim();
             AiRiskCheckResult result = parseModelResult(json);
+            applyCreditPolicyOverride(workflowCode, safeBusinessData, result);
             fillAuditFields(result, prompt, policyResponse, json, start);
             return result;
         } catch (Exception e) {
@@ -153,6 +154,47 @@ public class AiRiskCheckServiceImpl implements AiRiskCheckService {
         );
         fillRiskLevel(result);
         return result;
+    }
+
+    private void applyCreditPolicyOverride(
+            String workflowCode,
+            Map<String, Object> businessData,
+            AiRiskCheckResult result
+    ) {
+        if (!businessData.containsKey("loanAmount")) {
+            return;
+        }
+
+        BigDecimal loanAmount = readDecimal(businessData.get("loanAmount"));
+        BigDecimal annualIncome = readDecimal(businessData.get("annualIncome"));
+        int loanTerm = readInt(businessData.get("loanTerm"));
+        int creditScore = readInt(businessData.get("creditScore"));
+        String hasCollateral = String.valueOf(businessData.getOrDefault("hasCollateral", ""));
+        String loanPurpose = String.valueOf(businessData.getOrDefault("loanPurpose", ""));
+
+        int riskScore = scoreCreditRisk(loanAmount, annualIncome, loanTerm, creditScore, hasCollateral, loanPurpose);
+        result.setRiskScore(riskScore);
+        if (riskScore >= 70) {
+            result.setRiskLevel("HIGH");
+            result.setSuggestion("建议信贷委员会人工复核，并重点核实还款来源、抵押担保和经营流水。");
+        } else if (riskScore >= 31) {
+            result.setRiskLevel("MEDIUM");
+            result.setSuggestion("建议风控经理人工复核，关注额度、期限与收入覆盖情况。");
+        } else {
+            result.setRiskLevel("LOW");
+            result.setSuggestion("风险较低，可由 AI 自动审批通过并留痕。");
+        }
+
+        result.setRiskReason("系统按信贷制度字段归一化风险分。"
+                + "贷款金额(万元)：" + loanAmount
+                + "；贷款期限(月)：" + loanTerm
+                + "；征信评分：" + creditScore
+                + "；是否有抵押：" + hasCollateral
+                + "；年收入(万元)：" + annualIncome
+                + "；贷款用途：" + loanPurpose
+                + "；流程：" + workflowCode
+                + "。模型原始判断：" + text(result.getRiskReason()));
+        result.setDecision(isLowRisk(result) ? "APPROVED" : "NEED_HUMAN_REVIEW");
     }
 
     private String stripMarkdownFence(String json) {
@@ -194,6 +236,10 @@ public class AiRiskCheckServiceImpl implements AiRiskCheckService {
             Exception exception,
             Instant start
     ) {
+        if (businessData.containsKey("loanAmount")) {
+            return buildCreditLocalFallback(workflowCode, businessData, exception, start);
+        }
+
         BigDecimal amount = readAmount(businessData);
         AiRiskCheckResult result = new AiRiskCheckResult();
 
@@ -223,9 +269,77 @@ public class AiRiskCheckServiceImpl implements AiRiskCheckService {
         return result;
     }
 
+    private AiRiskCheckResult buildCreditLocalFallback(
+            String workflowCode,
+            Map<String, Object> businessData,
+            Exception exception,
+            Instant start
+    ) {
+        BigDecimal loanAmount = readDecimal(businessData.get("loanAmount"));
+        BigDecimal annualIncome = readDecimal(businessData.get("annualIncome"));
+        int loanTerm = readInt(businessData.get("loanTerm"));
+        int creditScore = readInt(businessData.get("creditScore"));
+        String hasCollateral = String.valueOf(businessData.getOrDefault("hasCollateral", ""));
+        String loanPurpose = String.valueOf(businessData.getOrDefault("loanPurpose", ""));
+
+        int riskScore = scoreCreditRisk(loanAmount, annualIncome, loanTerm, creditScore, hasCollateral, loanPurpose);
+
+        AiRiskCheckResult result = new AiRiskCheckResult();
+        result.setRiskScore(riskScore);
+        if (riskScore >= 70) {
+            result.setRiskLevel("HIGH");
+            result.setSuggestion("建议信贷委员会人工复核，并重点核实还款来源、抵押担保和经营流水。");
+        } else if (riskScore >= 31) {
+            result.setRiskLevel("MEDIUM");
+            result.setSuggestion("建议风控经理人工复核，关注额度、期限与收入覆盖情况。");
+        } else {
+            result.setRiskLevel("LOW");
+            result.setSuggestion("风险较低，可由 AI 自动审批通过并留痕。");
+        }
+
+        result.setRiskReason("外部RAG或大模型暂不可用，系统按信贷本地兜底规则评估。"
+                + "贷款金额(万元)：" + loanAmount
+                + "；贷款期限(月)：" + loanTerm
+                + "；征信评分：" + creditScore
+                + "；是否有抵押：" + hasCollateral
+                + "；年收入(万元)：" + annualIncome
+                + "；贷款用途：" + loanPurpose
+                + "；流程：" + workflowCode
+                + "；异常：" + exception.getMessage());
+        result.setDecision(isLowRisk(result) ? "APPROVED" : "NEED_HUMAN_REVIEW");
+        result.setPrompt("LOCAL_CREDIT_FALLBACK");
+        result.setRagContext("本地信贷兜底规则：综合贷款金额、期限、征信、抵押、收入覆盖和经营周转附加风险计算 0-100 风险分。");
+        result.setSources(List.of());
+        result.setRawResponse(exception.getMessage());
+        result.setModelName("local-credit-rule-fallback");
+        result.setDurationMs(Duration.between(start, Instant.now()).toMillis());
+        return result;
+    }
+
+    private int scoreCreditRisk(
+            BigDecimal loanAmount,
+            BigDecimal annualIncome,
+            int loanTerm,
+            int creditScore,
+            String hasCollateral,
+            String loanPurpose
+    ) {
+        int riskScore = 0;
+        riskScore += scoreLoanAmount(loanAmount);
+        riskScore += scoreLoanTerm(loanTerm);
+        riskScore += scoreCredit(creditScore);
+        riskScore += hasCollateral.contains("是") ? 2 : 15;
+        riskScore += scoreIncomeCoverage(annualIncome, loanAmount);
+        if (loanPurpose.contains("经营周转") && !hasCollateral.contains("是")) {
+            riskScore += 10;
+        }
+        return Math.min(100, Math.max(0, riskScore));
+    }
+
     private BigDecimal readAmount(Map<String, Object> businessData) {
         Object amount = firstNonNull(
                 businessData.get("amount"),
+                businessData.get("loanAmount"),
                 businessData.get("purchaseAmount"),
                 businessData.get("expenseAmount"),
                 businessData.get("金额")
@@ -240,6 +354,90 @@ public class AiRiskCheckServiceImpl implements AiRiskCheckService {
         }
     }
 
+    private int scoreLoanAmount(BigDecimal loanAmount) {
+        if (loanAmount.compareTo(BigDecimal.valueOf(100)) > 0) {
+            return 30;
+        }
+        if (loanAmount.compareTo(BigDecimal.valueOf(30)) > 0) {
+            return 18;
+        }
+        if (loanAmount.compareTo(BigDecimal.valueOf(10)) > 0) {
+            return 8;
+        }
+        return 3;
+    }
+
+    private int scoreLoanTerm(int loanTerm) {
+        if (loanTerm > 36) {
+            return 15;
+        }
+        if (loanTerm > 24) {
+            return 12;
+        }
+        if (loanTerm > 12) {
+            return 8;
+        }
+        if (loanTerm > 6) {
+            return 4;
+        }
+        return 1;
+    }
+
+    private int scoreCredit(int creditScore) {
+        if (creditScore <= 0 || creditScore < 500) {
+            return 25;
+        }
+        if (creditScore < 600) {
+            return 22;
+        }
+        if (creditScore < 700) {
+            return 14;
+        }
+        if (creditScore < 800) {
+            return 6;
+        }
+        return 2;
+    }
+
+    private int scoreIncomeCoverage(BigDecimal annualIncome, BigDecimal loanAmount) {
+        if (loanAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            return 15;
+        }
+        BigDecimal coverage = annualIncome.divide(loanAmount, 4, java.math.RoundingMode.HALF_UP);
+        if (coverage.compareTo(BigDecimal.valueOf(0.5)) < 0) {
+            return 15;
+        }
+        if (coverage.compareTo(BigDecimal.valueOf(1.5)) < 0) {
+            return 10;
+        }
+        if (coverage.compareTo(BigDecimal.valueOf(3)) < 0) {
+            return 5;
+        }
+        return 1;
+    }
+
+    private BigDecimal readDecimal(Object value) {
+        if (value == null) {
+            return BigDecimal.ZERO;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return BigDecimal.ZERO;
+        }
+    }
+
+    private int readInt(Object value) {
+        if (value == null) {
+            return 0;
+        }
+        try {
+            return new BigDecimal(String.valueOf(value)).intValue();
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private Object firstNonNull(Object... values) {
         for (Object value : values) {
             if (value != null) {
@@ -247,6 +445,10 @@ public class AiRiskCheckServiceImpl implements AiRiskCheckService {
             }
         }
         return null;
+    }
+
+    private String text(Object value) {
+        return value == null ? "" : String.valueOf(value);
     }
 
     private void fillRiskLevel(AiRiskCheckResult result) {

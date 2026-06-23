@@ -13,7 +13,7 @@ fi
 APP_DIR="${APP_DIR:-$DEFAULT_APP_DIR}"
 SERVER_HOST="${SERVER_HOST:-150.158.119.197}"
 PUBLIC_SITE_URL="${PUBLIC_SITE_URL:-http://$SERVER_HOST}"
-PUBLIC_API_BASE_URL="${PUBLIC_API_BASE_URL:-$PUBLIC_SITE_URL}"
+PUBLIC_API_BASE_URL="${PUBLIC_API_BASE_URL:-}"
 WEB_PORT="${WEB_PORT:-5173}"
 BACKEND_PORT="${BACKEND_PORT:-8080}"
 SPRING_PROFILES_ACTIVE="${SPRING_PROFILES_ACTIVE:-prod}"
@@ -67,6 +67,103 @@ wait_port() {
   return 1
 }
 
+apply_sql_migrations() {
+  local migration_dir="$APP_DIR/flowmind-server/src/main/resources/db/migration"
+  if [[ ! -d "$migration_dir" ]]; then
+    return 0
+  fi
+
+  shopt -s nullglob
+  local migration_files=("$migration_dir"/*.sql)
+  shopt -u nullglob
+  if [[ ${#migration_files[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  echo "Applying database migrations..."
+  for sql_file in "${migration_files[@]}"; do
+    echo "Applying $(basename "$sql_file")"
+    docker exec -i flowmind-postgres \
+      psql -v ON_ERROR_STOP=1 -U "$DB_USERNAME" -d "$DB_NAME" \
+      < "$sql_file"
+  done
+}
+
+configure_nginx() {
+  if ! command -v nginx >/dev/null 2>&1; then
+    echo "WARN: nginx is not installed. Built frontend files are in $APP_DIR/flowmind-web/dist." >&2
+    return 0
+  fi
+  if [[ ! -d /etc/nginx/conf.d || ! -w /etc/nginx/conf.d ]]; then
+    echo "WARN: /etc/nginx/conf.d is not writable. Please install $SCRIPT_DIR/nginx-flowmind.conf manually." >&2
+    return 0
+  fi
+
+  echo "Configuring nginx static frontend..."
+  cat > /etc/nginx/conf.d/flowmind.conf <<NGINX
+server {
+    listen 80;
+    server_name $SERVER_HOST;
+    root $APP_DIR/flowmind-web/dist;
+    index index.html;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 5;
+    gzip_types
+        text/plain
+        text/css
+        application/json
+        application/javascript
+        text/xml
+        application/xml
+        application/xml+rss
+        image/svg+xml;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:$BACKEND_PORT/api/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 60s;
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+
+    location /actuator/ {
+        proxy_pass http://127.0.0.1:$BACKEND_PORT/actuator/;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+
+    location /assets/ {
+        try_files \$uri =404;
+        expires 1y;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}
+NGINX
+  nginx -t
+  if command -v systemctl >/dev/null 2>&1; then
+    systemctl enable nginx >/dev/null 2>&1 || true
+    systemctl restart nginx
+  else
+    nginx -s reload || nginx
+  fi
+}
+
 if [[ -z "${DASHSCOPE_API_KEY:-}" ]]; then
   echo "WARN: DASHSCOPE_API_KEY is empty. RAG/chat calls may fail." >&2
 fi
@@ -84,6 +181,7 @@ APP_DIR="$APP_DIR" DB_NAME="$DB_NAME" DB_USERNAME="$DB_USERNAME" DB_PASSWORD="$D
 
 wait_port "$DB_HOST" "$DB_PORT" "Postgres"
 wait_port "$QDRANT_HOST" "$QDRANT_PORT" "Qdrant"
+apply_sql_migrations
 
 echo "Building backend..."
 cd "$APP_DIR/flowmind-server"
@@ -134,18 +232,16 @@ fi
 VITE_API_BASE_URL="$PUBLIC_API_BASE_URL" npm run build
 
 if [[ -f "$RUN_DIR/frontend.pid" ]] && kill -0 "$(cat "$RUN_DIR/frontend.pid")" >/dev/null 2>&1; then
-  echo "Stopping existing frontend..."
+  echo "Stopping existing vite preview frontend..."
   kill "$(cat "$RUN_DIR/frontend.pid")" || true
   sleep 2
 fi
+rm -f "$RUN_DIR/frontend.pid"
 
-echo "Starting frontend on port $WEB_PORT..."
-nohup npm run preview -- --host 0.0.0.0 --port "$WEB_PORT" \
-  > "$LOG_DIR/frontend.log" 2>&1 &
-echo $! > "$RUN_DIR/frontend.pid"
+configure_nginx
 
 echo "FlowMind AI is starting."
 echo "Public site: $PUBLIC_SITE_URL"
-echo "Frontend: http://$SERVER_HOST:$WEB_PORT"
+echo "Frontend: $PUBLIC_SITE_URL"
 echo "Backend health: http://$SERVER_HOST:$BACKEND_PORT/api/health"
-echo "Logs: $LOG_DIR/backend.log, $LOG_DIR/frontend.log"
+echo "Logs: $LOG_DIR/backend.log"

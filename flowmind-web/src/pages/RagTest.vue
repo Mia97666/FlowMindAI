@@ -64,6 +64,8 @@ async function askRag() {
       minScore: knowledgeConfig.minScore,
       adapterType: knowledgeConfig.adapterType,
     })
+  } catch {
+    // 异常已在 api 层弹窗处理
   } finally {
     ragLoading.value = false
   }

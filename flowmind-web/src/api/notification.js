@@ -1,7 +1,7 @@
 import { api } from './index'
 
-export function loadNotifications(receiver = 'admin') {
-  return api(`/api/notifications?receiver=${encodeURIComponent(receiver)}`)
+export function loadNotifications(receiver = 'admin', options = {}) {
+  return api(`/api/notifications?receiver=${encodeURIComponent(receiver)}`, options)
 }
 
 export function markRead(id) {

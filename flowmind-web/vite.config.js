@@ -4,6 +4,20 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          if (id.includes('/echarts/')) return 'vendor-echarts'
+          if (id.includes('/element-plus/') || id.includes('/@element-plus/')) return 'vendor-element-plus'
+          if (id.includes('/@vue-flow/')) return 'vendor-vue-flow'
+          if (id.includes('/vue/') || id.includes('/vue-router/')) return 'vendor-vue'
+          return 'vendor'
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
