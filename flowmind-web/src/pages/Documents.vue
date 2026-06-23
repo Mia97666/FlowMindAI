@@ -47,7 +47,7 @@
         <el-icon class="upload-icon"><UploadFilled /></el-icon>
         <div class="el-upload__text">拖入制度文件或点击选择</div>
       </el-upload>
-      <el-table :data="documentPageRows" height="360" empty-text="暂无制度文档">
+      <el-table :data="documentPageRows" max-height="360" empty-text="暂无制度文档">
         <el-table-column prop="originalFilename" label="文件名" min-width="220" />
         <el-table-column label="状态" width="110">
           <template #default>
@@ -89,7 +89,7 @@ import { Refresh, Search, UploadFilled } from '@element-plus/icons-vue'
 import { useSharedState } from '../composables/useSharedState'
 import { usePageableList } from '../composables/usePageableList'
 import { dateFormatter } from '../utils/helpers'
-import { loadDocumentPage as fetchDocumentPage, uploadDocument as uploadDoc, deleteDocument as deleteDoc } from '../api/knowledge'
+import { loadDocuments as fetchDocuments, loadDocumentPage as fetchDocumentPage, uploadDocument as uploadDoc, deleteDocument as deleteDoc } from '../api/knowledge'
 
 const router = useRouter()
 const { documents, documentPageRows, knowledgeConfig } = useSharedState()
@@ -104,9 +104,17 @@ const { filters, pagination, load, search, reset } = usePageableList(
 
 const totalChunks = computed(() => documents.value.reduce((total, item) => total + (item.chunkCount || 0), 0))
 
+async function refreshDocumentSummary() {
+  documents.value = await fetchDocuments()
+}
+
+async function refreshDocuments() {
+  await Promise.all([load(), refreshDocumentSummary()])
+}
+
 async function handleUpload(req) {
   await uploadDoc(req.file)
-  await load()
+  await refreshDocuments()
 }
 
 async function handleDelete(row) {
@@ -117,12 +125,12 @@ async function handleDelete(row) {
   }
   await deleteDoc(row.id)
   ElMessage.success('文档已删除')
-  await load()
+  await refreshDocuments()
 }
 
 function openChunks(row) {
   router.push(`/knowledge/chunks?documentId=${row.id}`)
 }
 
-onMounted(() => load())
+onMounted(() => refreshDocuments())
 </script>

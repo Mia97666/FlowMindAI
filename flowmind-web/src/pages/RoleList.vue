@@ -13,7 +13,7 @@
         <el-button type="primary" :icon="Search" @click="search">查询</el-button>
         <el-button @click="reset">重置</el-button>
       </div>
-      <el-table :data="rolePageRows" height="500" empty-text="暂无角色">
+      <el-table :data="rolePageRows" max-height="500" empty-text="暂无角色">
         <el-table-column prop="code" label="编码" width="160" />
         <el-table-column prop="name" label="名称" width="150" />
         <el-table-column prop="description" label="描述" min-width="220" />

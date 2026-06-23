@@ -26,7 +26,7 @@
         <el-button @click="reset">重置</el-button>
       </div>
 
-      <el-table :data="formPageRows" height="560" row-key="id" empty-text="暂无表单模板">
+      <el-table :data="formPageRows" max-height="560" row-key="id" empty-text="暂无表单模板">
         <el-table-column prop="formName" label="表单名称" min-width="180" />
         <el-table-column prop="formCode" label="表单编码" min-width="190" />
         <el-table-column label="当前版本" width="110">

@@ -615,8 +615,9 @@ select {
 }
 
 .table-pagination {
+  display: flex;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .lite-pagination {

@@ -1,0 +1,296 @@
+[
+  {
+    "strategyCode": "DEFAULT_AMOUNT_RISK",
+    "strategyName": "通用金额风险策略",
+    "aliases": ["DEFAULT", "通用风险评分策略"],
+    "lowMaxScore": 30,
+    "highMinScore": 70,
+    "autoApproveMaxScore": 30,
+    "threshold": 70,
+    "topK": 8,
+    "minScore": 0.4,
+    "ragScope": "企业制度库",
+    "llmMode": "ON_RULE_MISS",
+    "defaultSuggestion": "建议结合金额、业务必要性和制度依据进入后续审批。",
+    "fieldAliases": {
+      "amount": ["amount", "businessAmount", "applyAmount"]
+    },
+    "rules": [
+      {
+        "id": "amount-high",
+        "expression": "amount >= 200000",
+        "score": 85,
+        "reason": "申请金额达到通用高风险阈值。",
+        "suggestion": "建议转财务负责人或更高级审批人复核。",
+        "stopProcessing": true
+      },
+      {
+        "id": "amount-medium",
+        "expression": "amount >= 50000",
+        "score": 55,
+        "reason": "申请金额达到通用中风险阈值。",
+        "suggestion": "建议部门负责人或财务人员关注金额合理性。",
+        "stopProcessing": true
+      }
+    ]
+  },
+  {
+    "strategyCode": "PURCHASE_RISK_V1",
+    "strategyName": "采购制度风险评分策略",
+    "aliases": ["采购制度风险评分策略", "采购风险评分策略 V3", "PURCHASE", "PURCHASE_APPROVAL"],
+    "lowMaxScore": 30,
+    "highMinScore": 70,
+    "autoApproveMaxScore": 30,
+    "threshold": 70,
+    "topK": 8,
+    "minScore": 0.45,
+    "ragScope": "采购制度,财务制度,合规制度",
+    "llmMode": "NEVER",
+    "defaultSuggestion": "建议根据采购金额、采购必要性和制度要求进入后续审批。",
+    "fieldAliases": {
+      "amount": ["amount", "purchaseAmount", "businessAmount"]
+    },
+    "rules": [
+      {
+        "id": "purchase-amount-high",
+        "expression": "amount >= 200000",
+        "score": 85,
+        "reason": "采购金额达到高风险阈值。",
+        "suggestion": "建议转财务负责人或更高级审批人复核。",
+        "stopProcessing": true
+      },
+      {
+        "id": "purchase-amount-medium",
+        "expression": "amount >= 50000",
+        "score": 55,
+        "reason": "采购金额达到中风险阈值。",
+        "suggestion": "建议直属领导或财务人员关注预算和采购必要性。",
+        "stopProcessing": true
+      },
+      {
+        "id": "purchase-batch-large",
+        "expression": "quantity >= 50",
+        "score": 20,
+        "reason": "采购数量较大。"
+      }
+    ]
+  },
+  {
+    "strategyCode": "CREDIT_RISK_V1",
+    "strategyName": "信贷制度风险评分策略",
+    "aliases": ["信贷制度风险评分策略", "信贷制庋风险评分策略", "CREDIT", "CREDIT_APPROVAL"],
+    "lowMaxScore": 30,
+    "highMinScore": 70,
+    "autoApproveMaxScore": 30,
+    "threshold": 70,
+    "topK": 8,
+    "minScore": 0.45,
+    "ragScope": "信贷制度,风控制度,合规制度",
+    "llmMode": "NEVER",
+    "defaultSuggestion": "建议根据评分结果进入信贷审批路径。",
+    "fieldAliases": {
+      "loanAmount": ["loanAmount", "amount", "creditAmount"],
+      "annualIncome": ["annualIncome", "yearIncome"],
+      "creditScore": ["creditScore", "personalCreditScore"],
+      "loanPurpose": ["loanPurpose", "purpose"],
+      "hasCollateral": ["hasCollateral", "collateral"]
+    },
+    "rules": [
+      {
+        "id": "loan-amount-very-high",
+        "expression": "loanAmount > 100",
+        "score": 30,
+        "reason": "贷款金额超过100万元。",
+        "suggestion": "建议信贷委员会人工复核，并重点核实资金用途和还款来源。"
+      },
+      {
+        "id": "loan-amount-high",
+        "expression": "loanAmount > 30 && loanAmount <= 100",
+        "score": 18,
+        "reason": "贷款金额超过30万元。",
+        "suggestion": "建议风控经理复核额度合理性。"
+      },
+      {
+        "id": "loan-amount-medium",
+        "expression": "loanAmount > 10 && loanAmount <= 30",
+        "score": 8,
+        "reason": "贷款金额处于中等额度区间。"
+      },
+      {
+        "id": "loan-amount-low",
+        "expression": "loanAmount <= 10",
+        "score": 3,
+        "reason": "贷款金额较低。"
+      },
+      {
+        "id": "loan-term-very-long",
+        "expression": "loanTerm > 36",
+        "score": 15,
+        "reason": "贷款期限超过36个月。"
+      },
+      {
+        "id": "loan-term-long",
+        "expression": "loanTerm > 24 && loanTerm <= 36",
+        "score": 12,
+        "reason": "贷款期限超过24个月。"
+      },
+      {
+        "id": "loan-term-medium",
+        "expression": "loanTerm > 12 && loanTerm <= 24",
+        "score": 8,
+        "reason": "贷款期限超过12个月。"
+      },
+      {
+        "id": "loan-term-short",
+        "expression": "loanTerm > 6 && loanTerm <= 12",
+        "score": 4,
+        "reason": "贷款期限处于短中期。"
+      },
+      {
+        "id": "loan-term-very-short",
+        "expression": "loanTerm <= 6",
+        "score": 1,
+        "reason": "贷款期限较短。"
+      },
+      {
+        "id": "credit-score-missing-or-low",
+        "expression": "creditScore < 500",
+        "score": 25,
+        "reason": "征信评分缺失或低于500。"
+      },
+      {
+        "id": "credit-score-weak",
+        "expression": "creditScore >= 500 && creditScore < 600",
+        "score": 22,
+        "reason": "征信评分低于600。"
+      },
+      {
+        "id": "credit-score-normal",
+        "expression": "creditScore >= 600 && creditScore < 700",
+        "score": 14,
+        "reason": "征信评分处于一般区间。"
+      },
+      {
+        "id": "credit-score-good",
+        "expression": "creditScore >= 700 && creditScore < 800",
+        "score": 6,
+        "reason": "征信评分较好。"
+      },
+      {
+        "id": "credit-score-excellent",
+        "expression": "creditScore >= 800",
+        "score": 2,
+        "reason": "征信评分优秀。"
+      },
+      {
+        "id": "collateral-yes",
+        "expression": "hasCollateral == '是'",
+        "score": 2,
+        "reason": "已提供抵押担保。"
+      },
+      {
+        "id": "collateral-no",
+        "expression": "hasCollateral != '是'",
+        "score": 15,
+        "reason": "未提供抵押担保。",
+        "suggestion": "建议重点核实担保措施或补充增信材料。"
+      },
+      {
+        "id": "income-coverage-missing",
+        "expression": "annualIncome <= 0",
+        "score": 15,
+        "reason": "年收入缺失或无有效收入数据。"
+      },
+      {
+        "id": "income-coverage-weak",
+        "expression": "annualIncome > 0 && loanAmount > 0 && annualIncome < loanAmount",
+        "score": 15,
+        "reason": "年收入低于贷款金额，还款覆盖不足。"
+      },
+      {
+        "id": "income-coverage-normal",
+        "expression": "annualIncome >= loanAmount",
+        "score": 10,
+        "reason": "年收入可覆盖贷款金额。"
+      },
+      {
+        "id": "working-capital-no-collateral",
+        "expression": "loanPurpose contains '经营周转' && hasCollateral != '是'",
+        "score": 10,
+        "reason": "经营周转贷款且缺少抵押担保。",
+        "suggestion": "建议重点核实经营流水、资金用途和担保措施。"
+      }
+    ]
+  },
+  {
+    "strategyCode": "CONTRACT_SEAL_RISK_V1",
+    "strategyName": "合同盖章风控策略",
+    "aliases": ["合同盖章风控策略", "合同盖章风险评分策略", "合同盖章制度风险评分策略", "CONTRACT_SEAL", "CONTRACT"],
+    "lowMaxScore": 30,
+    "highMinScore": 70,
+    "autoApproveMaxScore": 30,
+    "threshold": 70,
+    "topK": 8,
+    "minScore": 0.45,
+    "ragScope": "合同制度,印章制度,法务制度,合规制度",
+    "llmMode": "ON_RULE_MISS",
+    "defaultSuggestion": "建议结合合同金额、用印类型、法务审核和交易对手风险进入后续审批。",
+    "fieldAliases": {
+      "contractAmount": ["contractAmount", "amount", "amount_1782197076690"],
+      "counterpartyName": ["counterpartyName", "companyName", "text_1782197041858"],
+      "applicantName": ["applicantName", "text_1782197020072"],
+      "signDate": ["signDate", "contractSignDate", "date_1782197073191"],
+      "contractAttachment": ["contractAttachment", "attachment_1782197127283"]
+    },
+    "rules": [
+      {
+        "id": "contract-amount-high",
+        "expression": "contractAmount >= 500000",
+        "score": 85,
+        "reason": "合同金额达到高风险阈值。",
+        "suggestion": "建议转财务或法务负责人复核合同金额、交易对手和用印必要性。",
+        "stopProcessing": true
+      },
+      {
+        "id": "contract-amount-low",
+        "expression": "contractAmount < 500000",
+        "score": 10,
+        "reason": "合同金额未达到高风险阈值。",
+        "suggestion": "可按低风险路径自动通过或进入轻量通知。",
+        "stopProcessing": true
+      },
+      {
+        "id": "company-seal",
+        "expression": "sealType == '公章'",
+        "score": 15,
+        "reason": "用印类型为公章。"
+      },
+      {
+        "id": "legal-not-reviewed",
+        "expression": "legalReviewed != '是'",
+        "score": 30,
+        "reason": "缺少法务审核。",
+        "suggestion": "建议先完成法务审核后再提交盖章。"
+      },
+      {
+        "id": "counterparty-high-risk",
+        "expression": "counterpartyRiskLevel == 'HIGH'",
+        "score": 25,
+        "reason": "交易对手风险等级较高。",
+        "suggestion": "建议核实交易对手资质、履约能力和黑名单状态。"
+      },
+      {
+        "id": "non-standard-template",
+        "expression": "standardTemplate != '是'",
+        "score": 15,
+        "reason": "合同未使用标准模板。"
+      },
+      {
+        "id": "urgent-seal",
+        "expression": "urgent == '是'",
+        "score": 10,
+        "reason": "申请为紧急用印。"
+      }
+    ]
+  }
+]

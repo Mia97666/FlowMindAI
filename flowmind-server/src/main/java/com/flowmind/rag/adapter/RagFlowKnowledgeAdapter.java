@@ -1,5 +1,6 @@
 package com.flowmind.rag.adapter;
 
+import com.flowmind.rag.dto.RagPipelineOptions;
 import com.flowmind.rag.dto.RagResponse;
 import com.flowmind.rag.dto.RagSource;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,7 @@ import java.util.List;
 public class RagFlowKnowledgeAdapter implements RagKnowledgeAdapter {
 
     @Override
-    public RagResponse ask(String question, Integer topK, Double minScore) {
+    public RagResponse ask(String question, Integer topK, Double minScore, RagPipelineOptions options) {
         return new RagResponse(
                 "RAGFlow Adapter 已预留，当前环境仍使用自研 RAG Pipeline。",
                 List.of(new RagSource(null, "RAGFlow Adapter", null, 0, 0D, question))

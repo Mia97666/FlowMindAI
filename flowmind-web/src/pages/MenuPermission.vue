@@ -107,13 +107,14 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { DocumentChecked, Plus, Search } from '@element-plus/icons-vue'
 import { useSharedState } from '../composables/useSharedState'
 import { menuTreeProps } from '../config/constants'
 import { flattenMenus, menuPathLabel } from '../utils/helpers'
-import { loadMenuTree, loadPermissionMenuTree, loadAllMenuTree, loadRoleMenus, saveRoleMenus, createMenu, updateMenu, disableMenu, enableMenu } from '../api/menu'
+import { loadPermissionMenuTree, loadAllMenuTree, loadRoleMenus, saveRoleMenus, createMenu, updateMenu, disableMenu, enableMenu } from '../api/menu'
+import { loadRoles as fetchRoles } from '../api/role'
 
 const { roles, permissionMenuTree, menuManageTree, checkedMenuIds } = useSharedState()
 
@@ -130,6 +131,39 @@ const menuForm = reactive({
 })
 
 const flatMenus = computed(() => flattenMenus(menuManageTree.value))
+
+onMounted(async () => {
+  await refreshMenuPermissionData()
+})
+
+async function refreshMenuPermissionData() {
+  const [nextRoles, nextPermissionTree, nextManageTree] = await Promise.all([
+    fetchRoles(),
+    loadPermissionMenuTree(),
+    loadAllMenuTree(),
+  ])
+  roles.value = nextRoles || []
+  permissionMenuTree.value = nextPermissionTree || []
+  menuManageTree.value = nextManageTree || []
+  if (!selectedMenuRoleId.value && roles.value.length > 0) {
+    selectedMenuRoleId.value = roles.value[0].id
+  }
+  if (selectedMenuRoleId.value) {
+    await handleRoleChange(selectedMenuRoleId.value)
+  }
+}
+
+async function refreshMenuTrees() {
+  const [nextPermissionTree, nextManageTree] = await Promise.all([
+    loadPermissionMenuTree(),
+    loadAllMenuTree(),
+  ])
+  permissionMenuTree.value = nextPermissionTree || []
+  menuManageTree.value = nextManageTree || []
+  if (selectedMenuRoleId.value) {
+    await handleRoleChange(selectedMenuRoleId.value)
+  }
+}
 
 function resetMenuForm(parentId) {
   Object.assign(menuForm, {
@@ -173,7 +207,7 @@ async function saveMenu() {
     ? await updateMenu(menuForm.id, payload)
     : await createMenu(payload)
   ElMessage.success('菜单已保存')
-  await loadAllMenuTree()
+  await refreshMenuTrees()
   selectMenu(saved)
 }
 
@@ -181,20 +215,21 @@ async function disableMenuAction() {
   if (!menuForm.id) return
   await disableMenu(menuForm.id)
   ElMessage.success('菜单已停用')
-  await loadAllMenuTree()
+  await refreshMenuTrees()
 }
 
 async function enableMenuAction() {
   if (!menuForm.id) return
   await enableMenu(menuForm.id)
   ElMessage.success('菜单已启用')
-  await loadAllMenuTree()
+  await refreshMenuTrees()
 }
 
 async function handleRoleChange(roleId) {
   if (!roleId) return
   const ids = await loadRoleMenus(roleId)
   checkedMenuIds.value = Array.isArray(ids) ? ids : []
+  await nextTick()
   menuTreeRef.value?.setCheckedKeys(checkedMenuIds.value)
 }
 

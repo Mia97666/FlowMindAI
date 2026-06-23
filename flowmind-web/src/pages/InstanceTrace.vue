@@ -7,7 +7,7 @@
           <el-button text :icon="Refresh" @click="load">刷新</el-button>
         </div>
       </template>
-      <el-table :data="instancePageRows" height="620" highlight-current-row empty-text="暂无流程实例" @current-change="selectInstance">
+      <el-table :data="instancePageRows" max-height="620" highlight-current-row empty-text="暂无流程实例" @current-change="selectInstance">
         <el-table-column prop="title" label="标题" min-width="220" />
         <el-table-column prop="definitionName" label="流程" width="150" />
         <el-table-column prop="starter" label="发起人" width="100" />

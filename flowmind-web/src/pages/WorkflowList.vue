@@ -27,7 +27,7 @@
         <el-button @click="reset">重置</el-button>
       </div>
 
-      <el-table :data="workflowPageRows" height="560" row-key="id" empty-text="暂无流程定义">
+      <el-table :data="workflowPageRows" max-height="560" row-key="id" empty-text="暂无流程定义">
         <el-table-column prop="name" label="流程名称" min-width="180" />
         <el-table-column prop="code" label="流程编码" min-width="180" />
         <el-table-column label="分类" width="110">

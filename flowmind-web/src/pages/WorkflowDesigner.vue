@@ -264,43 +264,6 @@
           </div>
           <el-empty v-else description="请选择画布节点" />
         </el-tab-pane>
-        <el-tab-pane label="动态表单" name="form">
-          <div class="table-toolbar">
-            <el-button :icon="Plus" @click="addFormField">添加字段</el-button>
-          </div>
-          <el-table :data="formFields" row-key="key" empty-text="暂无表单字段">
-            <el-table-column label="字段Key" min-width="150">
-              <template #default="{ row }"><el-input v-model="row.key" /></template>
-            </el-table-column>
-            <el-table-column label="字段名称" min-width="160">
-              <template #default="{ row }"><el-input v-model="row.label" /></template>
-            </el-table-column>
-            <el-table-column label="类型" width="150">
-              <template #default="{ row }">
-                <el-select v-model="row.type">
-                  <el-option label="文本" value="TEXT" />
-                  <el-option label="数字" value="NUMBER" />
-                  <el-option label="金额" value="AMOUNT" />
-                  <el-option label="日期" value="DATE" />
-                  <el-option label="下拉" value="SELECT" />
-                  <el-option label="多行文本" value="TEXTAREA" />
-                </el-select>
-              </template>
-            </el-table-column>
-            <el-table-column label="必填" width="90">
-              <template #default="{ row }"><el-switch v-model="row.required" /></template>
-            </el-table-column>
-            <el-table-column label="提示" min-width="220">
-              <template #default="{ row }"><el-input v-model="row.placeholder" /></template>
-            </el-table-column>
-            <el-table-column label="操作" width="90">
-              <template #default="{ $index }">
-                <el-button text type="danger" :icon="Delete" @click="formFields.splice($index, 1)" />
-              </template>
-            </el-table-column>
-          </el-table>
-        </el-tab-pane>
-
         <el-tab-pane label="条件连线" name="edges">
           <el-table :data="flowEdges" row-key="id" empty-text="暂无连线">
             <el-table-column prop="source" label="来源" width="170" />
@@ -375,7 +338,7 @@ import { VueFlow, MarkerType, Handle, Position } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import {
-  CircleClose, Delete, Document, DocumentChecked, Operation, Plus, Share, SwitchButton, Upload,
+  CircleClose, Delete, Document, DocumentChecked, Operation, Share, SwitchButton, Upload,
 } from '@element-plus/icons-vue'
 import { useSharedState } from '../composables/useSharedState'
 import { nodePalette, fieldPermissionOptions } from '../config/constants'
@@ -748,12 +711,6 @@ function resetQuickEdge() {
   quickEdge.source = flowNodes.value.find((node) => hasSourceHandle(node.data.nodeType))?.id || ''
   quickEdge.target = flowNodes.value.find((node) => hasTargetHandle(node.data.nodeType) && node.id !== quickEdge.source)?.id || ''
   quickEdge.condition = ''
-}
-
-function addFormField() {
-  formFields.value.push({
-    key: `field_${Date.now()}`, label: '新字段', type: 'TEXT', required: false, placeholder: '请输入',
-  })
 }
 
 function confirmNodeTypeChange(node, value) {

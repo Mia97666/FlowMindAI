@@ -24,7 +24,7 @@
         <el-button type="primary" :icon="Search" @click="search">查询</el-button>
         <el-button @click="reset">重置</el-button>
       </div>
-      <el-table :data="doneTasks" height="520" empty-text="暂无已审批任务" v-loading="doneLoading">
+      <el-table :data="doneTasks" max-height="520" empty-text="暂无已审批任务" v-loading="doneLoading">
         <el-table-column prop="id" label="任务ID" width="90" />
         <el-table-column label="申请标题" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">{{ taskInstanceTitle(row) }}</template>

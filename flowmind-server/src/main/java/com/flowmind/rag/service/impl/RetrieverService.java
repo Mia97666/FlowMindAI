@@ -11,12 +11,17 @@ import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
 import dev.langchain4j.store.embedding.EmbeddingStore;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 检索服务。
@@ -27,6 +32,7 @@ import java.util.Map;
  * 2. 混合检索
  * 3. 多路召回
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RetrieverService {
@@ -56,33 +62,47 @@ public class RetrieverService {
         List<EmbeddingMatch<TextSegment>> matches =
                 embeddingStore.search(searchRequest).matches();
 
-        List<RetrievedChunk> results = new ArrayList<>();
-
-        for (EmbeddingMatch<TextSegment> match : matches) {
-            String vectorId = match.embeddingId();
-
-            chunkRepository.findByVectorId(vectorId).ifPresent(chunk -> {
-                KnowledgeDocument document = documentRepository
-                        .findById(chunk.getDocumentId())
-                        .orElse(null);
-
-                String documentName = document == null
-                        ? "未知文档"
-                        : document.getOriginalFilename();
-
-                results.add(new RetrievedChunk(
-                        chunk.getDocumentId(),
-                        documentName,
-                        chunk.getId(),
-                        chunk.getChunkIndex(),
-                        match.score(),
-                        chunk.getContent(),
-                        "VECTOR"
-                ));
-            });
+        if (matches.isEmpty()) {
+            return List.of();
         }
 
-        return results;
+        Map<String, EmbeddingMatch<TextSegment>> matchesByVectorId = matches.stream()
+                .filter(match -> match.embeddingId() != null)
+                .collect(Collectors.toMap(
+                        EmbeddingMatch::embeddingId,
+                        Function.identity(),
+                        (left, right) -> left.score() >= right.score() ? left : right,
+                        LinkedHashMap::new
+                ));
+
+        List<KnowledgeChunk> matchedChunks = chunkRepository.findByVectorIdIn(
+                new ArrayList<>(matchesByVectorId.keySet())
+        );
+        Map<Long, KnowledgeDocument> documentsById = loadDocuments(matchedChunks);
+
+        List<RetrievedChunk> results = new ArrayList<>();
+        for (KnowledgeChunk chunk : matchedChunks) {
+            EmbeddingMatch<TextSegment> match = matchesByVectorId.get(chunk.getVectorId());
+            if (match == null) {
+                continue;
+            }
+            KnowledgeDocument document = documentsById.get(chunk.getDocumentId());
+            String documentName = document == null ? "未知文档" : document.getOriginalFilename();
+
+            results.add(new RetrievedChunk(
+                    chunk.getDocumentId(),
+                    documentName,
+                    chunk.getId(),
+                    chunk.getChunkIndex(),
+                    match.score(),
+                    chunk.getContent(),
+                    "VECTOR"
+            ));
+        }
+
+        return results.stream()
+                .sorted((a, b) -> Double.compare(b.getScore(), a.getScore()))
+                .toList();
     }
 
     /**
@@ -127,13 +147,12 @@ public class RetrieverService {
      */
     public List<RetrievedChunk> retrieveByKeyword(String keyword, int topK) {
         List<KnowledgeChunk> chunks = chunkRepository.searchByKeyword(keyword);
+        Map<Long, KnowledgeDocument> documentsById = loadDocuments(chunks);
 
         return chunks.stream()
                 .limit(topK)
                 .map(chunk -> {
-                    KnowledgeDocument document = documentRepository
-                            .findById(chunk.getDocumentId())
-                            .orElse(null);
+                    KnowledgeDocument document = documentsById.get(chunk.getDocumentId());
 
                     String documentName = document == null
                             ? "未知文档"
@@ -208,7 +227,7 @@ public class RetrieverService {
 
         for (RetrievedChunk chunk : vectorResults) {
             dedupMap.put(chunk.getChunkId(), chunk);
-            System.out.println("向量多路召回"+chunk.getContent());
+            log.debug("Vector retrieved chunkId={}, score={}", chunk.getChunkId(), chunk.getScore());
         }
 
         // 2. 关键词召回
@@ -233,5 +252,23 @@ public class RetrieverService {
                 .sorted((a, b) -> Double.compare(b.getScore(), a.getScore()))
                 .limit(topK)
                 .toList();
+    }
+
+    private Map<Long, KnowledgeDocument> loadDocuments(List<KnowledgeChunk> chunks) {
+        List<Long> documentIds = chunks.stream()
+                .map(KnowledgeChunk::getDocumentId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        if (documentIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return documentRepository.findAllById(documentIds).stream()
+                .collect(Collectors.toMap(
+                        KnowledgeDocument::getId,
+                        Function.identity(),
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
     }
 }

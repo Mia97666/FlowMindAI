@@ -17,7 +17,7 @@
         />
       </el-select>
       <el-button text :icon="Plus" @click="newFormDefinition">新建</el-button>
-      <el-button text :icon="Refresh" @click="refreshForms">刷新</el-button>
+      <el-button text :icon="Refresh" @click="refreshFormDesignerData">刷新</el-button>
       <span class="toolbar-spacer" />
       <el-button :icon="Search" @click="openFormPreview">预览</el-button>
       <el-button type="primary" :icon="DocumentChecked" @click="saveFormDefinition">保存表单</el-button>
@@ -74,8 +74,7 @@
                 <el-input v-else-if="control.componentType === 'TEXTAREA'" type="textarea" :rows="3" :placeholder="control.placeholder || `请输入${control.label}`" />
                 <el-date-picker v-else-if="['DATE', 'DATETIME'].includes(control.componentType)" :type="control.componentType === 'DATETIME' ? 'datetime' : 'date'" :placeholder="control.placeholder || '请选择'" />
                 <el-select v-else-if="control.componentType === 'SELECT'" :placeholder="control.placeholder || '请选择'">
-                  <el-option label="选项一" value="A" />
-                  <el-option label="选项二" value="B" />
+                  <el-option v-for="option in parseControlOptions(control)" :key="option.value" :label="option.label" :value="option.value" />
                 </el-select>
                 <el-upload v-else-if="control.componentType === 'FILE'" action="#" :auto-upload="false" :show-file-list="false">
                   <el-button :icon="UploadFilled">选择文件</el-button>
@@ -240,6 +239,7 @@ import { useSharedState } from '../composables/useSharedState'
 import { controlPalette, controlTypeOptions } from '../config/constants'
 import { parseFormSchema, parseControlOptions, parseJson, fieldTypeLabel } from '../utils/helpers'
 import { loadForms as fetchForms, createForm, updateForm, publishForm, disableForm } from '../api/form'
+import { loadFields as fetchFields } from '../api/field'
 
 const { forms, fields, workflows } = useSharedState()
 const route = useRoute()
@@ -301,7 +301,7 @@ const formReferences = computed(() => {
 
 onMounted(async () => {
   try {
-    await refreshForms()
+    await refreshFormDesignerData()
     const idParam = route.params.id
     if (idParam) {
       selectFormDefinition(Number(idParam))
@@ -392,6 +392,14 @@ async function disableFormDefinition() {
 
 async function refreshForms() {
   forms.value = await fetchForms(formFilters)
+}
+
+async function refreshFields() {
+  fields.value = await fetchFields()
+}
+
+async function refreshFormDesignerData() {
+  await Promise.all([refreshForms(), refreshFields()])
 }
 
 function onFormFieldDragStart(field) { draggingFormField.value = field; draggingFormControl.value = null }

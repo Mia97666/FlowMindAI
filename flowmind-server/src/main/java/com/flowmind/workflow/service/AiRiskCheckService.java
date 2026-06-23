@@ -1,7 +1,9 @@
 package com.flowmind.workflow.service;
 
 import com.flowmind.workflow.dto.AiRiskCheckResult;
+import com.flowmind.workflow.dto.AiRiskExecutionRequest;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -20,8 +22,21 @@ public interface AiRiskCheckService {
      * @param businessData 用户提交的业务数据
      * @return AI 风险检测结果
      */
-    AiRiskCheckResult check(
+    default AiRiskCheckResult check(
             String workflowCode,
             Map<String, Object> businessData
-    );
+    ) {
+        AiRiskExecutionRequest request = new AiRiskExecutionRequest();
+        request.setWorkflowCode(workflowCode);
+        request.setBusinessData(businessData == null ? new LinkedHashMap<>() : new LinkedHashMap<>(businessData));
+        return check(request);
+    }
+
+    /**
+     * 执行带节点配置的 AI 风险检测。
+     *
+     * @param request 工作流、节点配置和业务数据上下文
+     * @return AI 风险检测结果
+     */
+    AiRiskCheckResult check(AiRiskExecutionRequest request);
 }

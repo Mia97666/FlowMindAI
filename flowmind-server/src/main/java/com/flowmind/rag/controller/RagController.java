@@ -38,7 +38,8 @@ public class RagController {
         return adapter.ask(
                 request.getQuestion(),
                 request.getTopK(),
-                request.getMinScore()
+                request.getMinScore(),
+                request.toPipelineOptions()
         );
     }
 }

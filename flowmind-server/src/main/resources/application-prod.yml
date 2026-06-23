@@ -27,3 +27,11 @@ flowmind:
     rate-limit:
       enabled: ${RAG_RATE_LIMIT_ENABLED:true}
       daily-limit: ${RAG_DAILY_LIMIT:10}
+    pipeline:
+      query-rewrite-enabled: ${RAG_QUERY_REWRITE_ENABLED:false}
+      multi-query-enabled: ${RAG_MULTI_QUERY_ENABLED:false}
+      max-multi-queries: ${RAG_MAX_MULTI_QUERIES:3}
+      keyword-search-enabled: ${RAG_KEYWORD_SEARCH_ENABLED:true}
+      context-compression-enabled: ${RAG_CONTEXT_COMPRESSION_ENABLED:true}
+      rerank-enabled: ${RAG_RERANK_ENABLED:true}
+      timing-log-enabled: ${RAG_TIMING_LOG_ENABLED:true}

@@ -21,8 +21,21 @@ management:
 
 flowmind:
   rag:
+    pipeline:
+      default-top-k: 8
+      default-min-score: 0.4
+      query-rewrite-enabled: false
+      multi-query-enabled: false
+      max-multi-queries: 3
+      keyword-search-enabled: true
+      context-compression-enabled: true
+      rerank-enabled: true
+      timing-log-enabled: true
+      response-cache-enabled: true
+      response-cache-max-size: 128
+      response-cache-ttl-seconds: 300
     # 测试阶段 RAG 调用限流，关闭后不限流
     rate-limit:
       enabled: true
       # 每天全局最大调用次数（非按用户）
-      daily-limit: 5
+      daily-limit: 10

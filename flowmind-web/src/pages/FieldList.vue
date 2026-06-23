@@ -32,7 +32,7 @@
         <el-button @click="reset">重置</el-button>
       </div>
 
-      <el-table :data="fieldPageRows" height="560" row-key="id" empty-text="暂无字段定义">
+      <el-table :data="fieldPageRows" max-height="560" row-key="id" empty-text="暂无字段定义">
         <el-table-column prop="fieldKey" label="字段 Key" min-width="160" />
         <el-table-column prop="fieldName" label="字段名称" min-width="150" />
         <el-table-column label="类型" width="120">

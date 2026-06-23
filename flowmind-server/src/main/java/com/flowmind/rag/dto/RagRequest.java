@@ -40,4 +40,34 @@ public class RagRequest {
      * 为空时默认 SELF。
      */
     private String adapterType;
+
+    /**
+     * 检索模式。
+     *
+     * LIGHT：轻量模式，默认模式，关闭查询重写和多查询扩展。
+     * HIGH_RECALL：高召回率模式，允许用户手动开启增强能力。
+     */
+    private String retrievalMode;
+
+    /**
+     * 查询重写开关。
+     *
+     * 仅在 retrievalMode=HIGH_RECALL 时生效。
+     */
+    private Boolean queryRewriteEnabled;
+
+    /**
+     * 多查询扩展开关。
+     *
+     * 仅在 retrievalMode=HIGH_RECALL 时生效。
+     */
+    private Boolean multiQueryEnabled;
+
+    public RagPipelineOptions toPipelineOptions() {
+        return new RagPipelineOptions(
+                retrievalMode,
+                queryRewriteEnabled,
+                multiQueryEnabled
+        );
+    }
 }

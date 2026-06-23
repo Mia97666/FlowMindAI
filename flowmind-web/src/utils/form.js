@@ -4,6 +4,7 @@ export function parseFormSchema(schemaJson) {
     return (parsed.fields || []).map((field) => ({
       ...field,
       id: field.id || `field_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+      optionsJson: field.optionsJson || (Array.isArray(field.options) ? JSON.stringify(field.options) : ''),
     }))
   } catch (error) {
     return []
@@ -11,6 +12,14 @@ export function parseFormSchema(schemaJson) {
 }
 
 export function parseControlOptions(field) {
+  if (Array.isArray(field.options)) return field.options
+  if (typeof field.options === 'string' && field.options.trim()) {
+    try {
+      return JSON.parse(field.options)
+    } catch {
+      return []
+    }
+  }
   try {
     return JSON.parse(field.optionsJson || '[]')
   } catch (error) {

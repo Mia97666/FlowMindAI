@@ -1,6 +1,7 @@
 package com.flowmind.rag.adapter;
 
 import com.flowmind.rag.dto.RagResponse;
+import com.flowmind.rag.dto.RagPipelineOptions;
 import com.flowmind.rag.service.KnowledgeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Primary;
@@ -19,7 +20,7 @@ public class SelfRagKnowledgeAdapter implements RagKnowledgeAdapter {
     private final KnowledgeService knowledgeService;
 
     @Override
-    public RagResponse ask(String question, Integer topK, Double minScore) {
-        return knowledgeService.ask(question, topK, minScore);
+    public RagResponse ask(String question, Integer topK, Double minScore, RagPipelineOptions options) {
+        return knowledgeService.ask(question, topK, minScore, options);
     }
 }

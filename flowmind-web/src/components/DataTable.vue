@@ -4,6 +4,7 @@
       v-bind="$attrs"
       :data="data"
       :height="height"
+      :max-height="maxHeight"
       empty-text="暂无数据"
       @current-change="$emit('current-change', $event)"
       @selection-change="$emit('selection-change', $event)"
@@ -28,6 +29,7 @@
 defineProps({
   data: { type: Array, default: () => [] },
   height: { type: [String, Number], default: undefined },
+  maxHeight: { type: [String, Number], default: undefined },
   showPagination: { type: Boolean, default: false },
   currentPage: { type: Number, default: 1 },
   pageSize: { type: Number, default: 10 },

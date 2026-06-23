@@ -18,7 +18,7 @@
         <el-button type="primary" :icon="Search" @click="search">查询</el-button>
         <el-button @click="reset">重置</el-button>
       </div>
-      <el-table :data="userPageRows" height="500" empty-text="暂无用户">
+      <el-table :data="userPageRows" max-height="500" empty-text="暂无用户">
         <el-table-column prop="username" label="用户名" width="130" />
         <el-table-column prop="realName" label="姓名" width="130" />
         <el-table-column prop="department" label="部门" width="130" />

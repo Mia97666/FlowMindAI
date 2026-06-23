@@ -92,6 +92,7 @@ const chunkPagination = reactive({ page: 1, size: 10, total: 0 })
 const formFilters = reactive({ formName: '', formCode: '', status: '' })
 const knowledgeConfig = reactive({
   name: 'FlowMind 知识库', adapterType: 'SELF', topK: 2, minScore: 0.55,
+  retrievalMode: 'LIGHT', queryRewriteEnabled: false, multiQueryEnabled: false,
   embeddingModel: 'text-embedding-v3', rerankModel: 'bge-reranker-v2-m3',
   chunkSize: 800, chunkOverlap: 120, ragFlowEnabled: false,
   ragFlowEndpoint: '', ragFlowDatasetId: '', ragFlowApiKey: '',

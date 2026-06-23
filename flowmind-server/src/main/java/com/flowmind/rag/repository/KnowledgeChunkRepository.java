@@ -14,6 +14,8 @@ public interface KnowledgeChunkRepository extends JpaRepository<KnowledgeChunk, 
 
     Optional<KnowledgeChunk> findByVectorId(String vectorId);
 
+    List<KnowledgeChunk> findByVectorIdIn(List<String> vectorIds);
+
     /**
      * 简单关键词检索。
      *

@@ -29,7 +29,7 @@
         :current-page="pagination.page"
         :page-size="pagination.size"
         :total="pagination.total"
-        height="520"
+        max-height="520"
         @page-change="handlePageChange"
         @size-change="handleSizeChange"
       >

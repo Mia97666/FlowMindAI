@@ -1,5 +1,6 @@
 package com.flowmind.rag.service;
 
+import com.flowmind.rag.dto.RagPipelineOptions;
 import com.flowmind.rag.dto.RagResponse;
 
 /**
@@ -28,5 +29,18 @@ public interface KnowledgeService {
      * @param minScore 向量相似度最低阈值，为空时使用默认值
      * @return 知识库回答
      */
-    RagResponse ask(String question, Integer topK, Double minScore);
+    default RagResponse ask(String question, Integer topK, Double minScore) {
+        return ask(question, topK, minScore, null);
+    }
+
+    /**
+     * 根据问题查询企业知识库，支持指定检索参数和管线选项。
+     *
+     * @param question 用户问题
+     * @param topK 召回 TopK 数量，为空时使用默认值
+     * @param minScore 向量相似度最低阈值，为空时使用默认值
+     * @param options 本次请求的 RAG 管线选项
+     * @return 知识库回答
+     */
+    RagResponse ask(String question, Integer topK, Double minScore, RagPipelineOptions options);
 }

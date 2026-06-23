@@ -27,7 +27,7 @@
         :closable="false"
         :title="`当前文档：${selectedKnowledgeDocument.originalFilename}`"
       />
-      <el-table :data="chunkPageRows" height="480" empty-text="请选择左侧文档查看 Chunk">
+      <el-table :data="chunkPageRows" max-height="480" empty-text="请选择左侧文档查看 Chunk">
         <el-table-column prop="chunkIndex" label="序号" width="90" />
         <el-table-column prop="content" label="内容摘要" min-width="260" show-overflow-tooltip />
         <el-table-column prop="vectorId" label="向量ID" min-width="160" show-overflow-tooltip />
@@ -56,7 +56,7 @@ import { Refresh, Search } from '@element-plus/icons-vue'
 import { useSharedState } from '../composables/useSharedState'
 import { usePageableList } from '../composables/usePageableList'
 import { dateFormatter } from '../utils/helpers'
-import { loadChunkPage as fetchChunkPage } from '../api/knowledge'
+import { loadDocuments as fetchDocuments, loadChunkPage as fetchChunkPage } from '../api/knowledge'
 
 const route = useRoute()
 const { documents, chunkPageRows, knowledgeDocFilters } = useSharedState()
@@ -90,12 +90,24 @@ async function openDocumentChunks(row) {
   await load()
 }
 
+async function ensureDocumentsLoaded() {
+  if (documents.value.length > 0) return
+  documents.value = await fetchDocuments()
+}
+
 onMounted(async () => {
+  await ensureDocumentsLoaded()
   const documentId = route.query.documentId
   if (documentId) {
     const id = Number(documentId)
     const doc = documents.value.find((d) => d.id === id)
-    if (doc) openDocumentChunks(doc)
+    if (doc) {
+      await openDocumentChunks(doc)
+      return
+    }
+  }
+  if (documents.value.length > 0) {
+    await openDocumentChunks(documents.value[0])
   }
 })
 </script>

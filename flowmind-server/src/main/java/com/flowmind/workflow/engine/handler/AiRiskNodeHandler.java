@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowmind.audit.service.AiAuditService;
 import com.flowmind.notification.service.NotificationService;
 import com.flowmind.workflow.dto.AiRiskCheckResult;
+import com.flowmind.workflow.dto.AiRiskExecutionRequest;
 import com.flowmind.workflow.engine.model.NodeExecutionResult;
 import com.flowmind.workflow.engine.model.WorkflowExecutionContext;
 import com.flowmind.workflow.engine.model.WorkflowNode;
@@ -51,10 +52,14 @@ public class AiRiskNodeHandler implements NodeHandler {
     ) {
         WorkflowInstance instance = context.getInstance();
 
-        AiRiskCheckResult result = aiRiskCheckService.check(
-                instance.getDefinitionCode(),
-                context.getBusinessData()
-        );
+        AiRiskExecutionRequest request = new AiRiskExecutionRequest();
+        request.setWorkflowCode(instance.getDefinitionCode());
+        request.setNodeId(node.getId());
+        request.setNodeName(node.getName());
+        request.setNodeConfig(node.getConfig());
+        request.setBusinessData(context.getBusinessData());
+
+        AiRiskCheckResult result = aiRiskCheckService.check(request);
         applyThresholdDecision(result, node);
         fillInstanceRiskResult(instance, result);
         aiAuditService.record(instance.getId(), instance.getDefinitionCode(), node.getId(), result);

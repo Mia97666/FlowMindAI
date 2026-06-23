@@ -20,7 +20,7 @@
         <el-button type="primary" :icon="Search" @click="search">查询</el-button>
         <el-button @click="reset">重置</el-button>
       </div>
-      <el-table :data="todoTasks" height="520" highlight-current-row empty-text="暂无待审批任务" v-loading="todoLoading" @current-change="selectTask">
+      <el-table :data="todoTasks" max-height="520" highlight-current-row empty-text="暂无待审批任务" v-loading="todoLoading" @current-change="selectTask">
         <el-table-column prop="id" label="任务ID" width="90" />
         <el-table-column label="申请标题" min-width="220" show-overflow-tooltip>
           <template #default="{ row }">{{ taskInstanceTitle(row) }}</template>
