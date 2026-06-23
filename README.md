@@ -1,403 +1,94 @@
 # FlowMind AI
 
-FlowMind AI 是一个面向企业内部管理场景的智能审批流平台。系统目标是让管理人员可以动态定义审批流程、表单字段、审批表单、BPMN 工作流、角色权限与菜单权限，并在流程运行时结合企业制度知识库、RAG 检索和大模型能力完成风险评分、依据解释、自动路由与审计追踪。
+> 智能审批流平台：把流程、表单、权限、企业制度知识库和 AI 风险判断串成一套可配置、可追溯的审批系统。
 
-当前仓库处于开发阶段，后端自研RAG功能已完成。后续前后端实现应以 `需求文档/FlowMind AI 核心模型与产品规划文档.md` 和 `需求文档/FlowMind AI 原型设计说明.md` 为准。
-最小MVP在线演示地址：http://150.158.119.197
-
-## 项目定位
-
-企业审批系统通常会遇到几个问题：
-
-- 流程变化快，审批节点、审批人、表单字段经常需要调整。
-- 审批依据分散在制度文档、管理办法、历史记录和人工经验里。
-- 高风险申请难以及时识别，低风险申请又容易被过度人工处理。
-- 表单和流程一旦改版，历史审批记录容易出现展示错乱。
-- 权限、菜单、角色、任务归属如果没有统一模型，后期会很难扩展。
-
-FlowMind AI 的核心思路是：
-
-- 用字段定义、表单版本、工作流版本支撑可配置审批。
-- 用 RAG 检索企业制度，为 AI 风险评分提供来源引用和依据说明。
-- 用风险等级和条件路由把申请自动流转到不同审批角色，低风险可由 AI 自动审批通过。
-- 用实例快照、任务日志、表单数据版本和 AI 审计日志保证可解释、可追溯、可审计。
+FlowMind AI 面向企业内部审批场景，支持可视化工作流设计、动态表单搭建、审批任务流转、RAG 制度检索、AI 风险评分与自动路由。当前 MVP 已跑通“信贷审批”场景，可演示低风险自动通过、中高风险转人工复核、来源引用与审计留痕。
 
 ## 核心能力
 
-### 1. 动态字段与表单
+| 模块 | 能力 |
+| --- | --- |
+| 流程设计 | 可视化编排开始、表单任务、AI 风险检测、条件路由、人工审批、通知、结束节点 |
+| 表单设计 | 动态字段、控件配置、必填校验、发布版本、运行态表单渲染 |
+| 审批运行 | 发起审批、待办处理、已办查看、实例追踪、任务日志 |
+| 知识库 | 制度文档上传、Chunk 查看、RAG 检索、回答来源引用 |
+| AI 风险 | 基于表单数据和制度片段输出风险等级，并驱动流程自动分流 |
+| 用户权限 | 用户、角色、菜单授权，支撑后台模块访问控制 |
 
-- 支持选择数据库已有字段。
-- 支持创建平台自定义字段。
-- 支持系统内置字段，例如发起人、部门、流程状态、风险分。
-- 表单控件绑定字段定义。
-- 支持必填、格式、范围、长度、枚举、显示隐藏、只读可编辑等校验和权限配置。
-- 表单发布后形成不可变版本，历史流程实例始终渲染当时的表单版本。
+## 技术栈
 
-### 2. 工作流设计
+- 后端：Java 21、Spring Boot 3、Spring Data JPA、PostgreSQL、Qdrant、Maven
+- 前端：Vue 3、Vite、Element Plus、Vue Router、Vue Flow
+- AI/RAG：自研 RAG Pipeline，预留 RAGFlow Adapter
+- 部署：Docker Compose、Nginx、Shell 脚本
 
-- 支持流程管理、版本管理、发布和停用。
-- 支持 BPMN 风格工作流设计。
-- 支持开始节点、结束节点、表单任务、人工审批、AI 风险检测、AI 审批、排他网关、并行网关、通知节点和脚本任务。
-- 节点必须能绑定角色、审批人策略和表单版本。
-- 节点之间通过连线和条件表达式决定流转路径。
-- 支持基于风险评分的自动路由。
+## 最小 MVP 演示地址
 
-### 3. 审批运行
+- 前端页面：`http://localhost:5173`
+- 后端健康检查：`http://localhost:8080/api/health`
+- 跑通文档：[docs/最小MVP跑通流程文档.md](docs/最小MVP跑通流程文档.md)
 
-- 发起人选择流程后，系统渲染流程启动表单。
-- 点击提交表单触发统一流程动作接口，创建或推进流程实例。
-- 点击撤销表单同样触发统一流程动作接口，由后端根据动作类型决定撤销、退回或终止。
-- 审批人在待办列表中打开任务，系统按任务绑定的表单版本渲染审批页面。
-- 已审批列表和实例追踪必须可查看历史表单、审批意见、AI 依据、RAG 来源和流程日志。
+### 演示截图
 
-### 4. AI 风险评分与 RAG 依据
+**工作流设计**
 
-- 内置自研 RAG Pipeline，用于企业制度检索、来源引用和风险依据支撑。
-- AI 节点根据流程上下文、表单数据、制度片段和策略配置输出风险评分。
-- 风险等级可分为 LOW、MEDIUM、HIGH、CRITICAL。
-- MVP 策略为 LOW 风险 AI 自动通过，MEDIUM/HIGH 风险转人工复核。
-- 风险结果可以驱动工作流路由，例如高风险进入财务复核，低风险直接进入通知和结束节点。
-- 系统预留 RAGFlow Adapter，后续可对接外部 RAGFlow 知识库平台。
+![工作流设计](image/demo-workflow.png)
 
-### 5. 权限与菜单
+**信贷申请表单设计**
 
-- 用户可以绑定多个角色。
-- 菜单采用层级结构管理。
-- 角色通过菜单授权获得页面访问能力。
-- 工作流节点通过角色、用户、直属领导、部门负责人等策略计算候选审批人。
-- 审批任务归属必须可解释，能说明任务为什么分配给某个用户或角色。
+![信贷申请表单设计](image/demo-form.png)
 
-## 产品信息架构
+**RAG 测试与来源引用**
 
-顶部一级导航：
+![RAG 测试与来源引用](image/demo-rag.png)
 
-```text
-运行总览
-流程设计
-审批
-知识库
-用户管理
+## 快速启动
+
+### 1. 启动基础设施
+
+```bash
+docker compose up -d
 ```
 
-流程设计二级导航：
+### 2. 启动后端
 
-```text
-流程管理
-流程表单字段管理
-流程表单管理
-工作流设计管理
+```bash
+cd flowmind-server
+./mvnw spring-boot:run
 ```
 
-审批二级导航：
+### 3. 启动前端
 
-```text
-待审批
-已审批
-发起审批
+```bash
+cd flowmind-web
+npm install
+npm run dev
 ```
 
-知识库二级导航：
+启动后打开 `http://localhost:5173`。
 
-```text
-制度文档
-Chunk 查看
-RAG 测试
-知识库配置
-```
-
-用户管理二级导航：
-
-```text
-个人信息
-角色管理
-用户管理
-菜单管理
-```
-
-## 核心领域模型
-
-```mermaid
-erDiagram
-    SYS_USER ||--o{ SYS_USER_ROLE : has
-    SYS_ROLE ||--o{ SYS_USER_ROLE : assigned
-    SYS_ROLE ||--o{ SYS_ROLE_MENU : grants
-    SYS_MENU ||--o{ SYS_ROLE_MENU : protected_by
-
-    FM_FIELD_DEFINITION ||--o{ FM_FORM_FIELD_BINDING : bound
-    FM_FORM_DEFINITION ||--o{ FM_FORM_VERSION : versions
-    FM_FORM_VERSION ||--o{ FM_FORM_FIELD_BINDING : contains
-
-    FM_WORKFLOW_DEFINITION ||--o{ FM_WORKFLOW_VERSION : versions
-    FM_WORKFLOW_VERSION ||--o{ FM_WORKFLOW_NODE : contains
-    FM_WORKFLOW_VERSION ||--o{ FM_WORKFLOW_EDGE : contains
-    FM_FORM_VERSION ||--o{ FM_WORKFLOW_NODE : binds
-    SYS_ROLE ||--o{ FM_WORKFLOW_NODE : candidate_role
-
-    FM_WORKFLOW_DEFINITION ||--o{ FM_WORKFLOW_INSTANCE : starts
-    FM_WORKFLOW_VERSION ||--o{ FM_WORKFLOW_INSTANCE : snapshot
-    FM_WORKFLOW_INSTANCE ||--o{ FM_WORKFLOW_TASK : creates
-    FM_WORKFLOW_INSTANCE ||--o{ FM_FORM_DATA : stores
-    FM_WORKFLOW_INSTANCE ||--o{ FM_WORKFLOW_ACTION_LOG : records
-    FM_WORKFLOW_INSTANCE ||--o{ FM_AI_AUDIT_LOG : audits
-```
-
-关键对象：
-
-- `Field Definition`：字段定义，描述业务数据本身。
-- `Form Definition`：表单定义，描述一个可复用表单。
-- `Form Version`：表单版本，发布后的表单快照。
-- `Workflow Definition`：流程定义，描述业务流程主对象。
-- `Workflow Version`：工作流版本，保存 BPMN、节点、连线和条件。
-- `Workflow Node`：工作流节点，绑定表单、角色、审批策略或 AI 策略。
-- `Workflow Edge`：节点连线，保存源节点、目标节点和条件表达式。
-- `Workflow Instance`：流程实例，记录一次真实审批运行。
-- `Workflow Task`：审批任务，记录某个用户或角色需要处理的节点任务。
-- `Form Data`：表单数据，保存实例在不同节点提交的数据快照。
-- `AI Audit Log`：AI 审计日志，保存 RAG 来源、风险依据、模型输出和评分。
-
-## 流程动作模型
-
-系统建议统一使用流程动作接口承载提交、撤销、同意、拒绝、退回、转办等行为。
-
-```mermaid
-flowchart LR
-    A["选择流程"] --> B["渲染启动表单版本"]
-    B --> C{"用户动作"}
-    C -->|"SUBMIT"| D["创建或推进流程实例"]
-    C -->|"WITHDRAW"| E["撤销或退回流程"]
-    C -->|"SAVE_DRAFT"| F["保存草稿"]
-    D --> G["执行工作流节点"]
-    G --> H{"节点类型"}
-    H -->|"AI 节点"| I["RAG 检索 + 风险评分"]
-    I --> P{"风险等级"}
-    P -->|"LOW"| Q["AI 自动审批通过"]
-    P -->|"MEDIUM / HIGH"| K["条件路由"]
-    Q --> G
-    H -->|"人工审批"| J["创建审批任务"]
-    H -->|"网关"| K
-    J --> L{"审批动作"}
-    L -->|"APPROVE"| G
-    L -->|"REJECT"| M["拒绝结束"]
-    L -->|"RETURN"| N["退回指定节点"]
-    L -->|"TRANSFER"| O["转办"]
-```
-
-待办、已办和查看页面需要携带以下关键 ID，保证页面可以正确跳转和渲染：
-
-- `taskId`
-- `instanceId`
-- `workflowDefinitionId`
-- `workflowVersionId`
-- `formDefinitionId`
-- `formVersionId`
-- `formDataId`
-- `businessKey`
-- `nodeKey`
-
-## 数据库设计概览
-
-详细字段设计见：
-
-- `需求文档/FlowMind AI 核心模型与产品规划文档.md`
-
-核心表建议分组如下：
-
-### 用户与权限
-
-- `sys_user`
-- `sys_role`
-- `sys_user_role`
-- `sys_menu`
-- `sys_role_menu`
-
-### 字段与表单
-
-- `fm_field_definition`
-- `fm_form_definition`
-- `fm_form_version`
-- `fm_form_field_binding`
-
-### 流程与工作流
-
-- `fm_workflow_definition`
-- `fm_workflow_version`
-- `fm_workflow_node`
-- `fm_workflow_edge`
-- `fm_ai_strategy`
-
-### 流程运行
-
-- `fm_workflow_instance`
-- `fm_workflow_task`
-- `fm_form_data`
-- `fm_form_data_index`
-- `fm_workflow_action_log`
-
-### AI 与知识库
-
-- `fm_ai_audit_log`
-- `fm_notification`
-- `fm_knowledge_document`
-- `fm_knowledge_chunk`
-
-## 前端原型
-
-HTML 静态原型位置：
-
-```text
-需求文档/原型/FlowMind AI HTML页面原型.html
-```
-
-原型覆盖页面：
-
-- 运行总览
-- 流程管理
-- 流程表单字段管理
-- 流程表单管理
-- 表单设计器
-- 工作流设计管理
-- 待审批
-- 已审批
-- 发起审批
-- 审批表单运行态
-- 制度文档
-- Chunk 查看
-- RAG 测试
-- 知识库配置
-- 个人信息
-- 角色管理
-- 用户管理
-- 菜单管理
-
-视觉方向：
-
-- 整体采用高端集团企业管理后台风格。
-- 页面基底使用浅灰，左侧固定导航使用藏蓝，主色统一为 `#165DFF`。
-- 管理页面强调大面积数据看板、低饱和配色、细分割线、轻微投影、精致表格和清晰信息层级。
-- 表单设计器和工作流设计器同样保持企业后台风格，使用三栏结构、网格画布、可操作卡片、SVG 箭头连线和明确工具条。
-
-## 建议技术栈
-
-### 后端
-
-- Java 21
-- Spring Boot 3.x
-- Spring Security
-- MyBatis Plus 或 JPA
-- PostgreSQL
-- Qdrant 或兼容向量数据库
-- DashScope/Qwen 或兼容 OpenAI 协议的大模型服务
-- Maven
-
-### 前端
-
-- Vue 3
-- TypeScript
-- Vite
-- Element Plus
-- Pinia
-- Vue Router
-- BPMN/流程图组件库
-- 表单设计器组件化封装
-
-### 基础设施
-
-- Docker Compose
-- PostgreSQL
-- Qdrant
-- 本地企业制度文档目录
-
-## 仓库目录
+## 目录结构
 
 ```text
 FlowMindAI
-├── docs/                         # 企业制度示例文档
-├── flowmind-server/              # 后端工程目录
-├── flowmind-web/                 # 前端工程目录
-├── data/                         # 本地开发数据目录
-├── 需求文档/                     # 产品需求、技术设计、接口和原型文档
-│   ├── FlowMind AI 核心模型与产品规划文档.md
-│   ├── FlowMind AI 原型设计说明.md
-│   ├── FlowMind AI 前后端接口文档.md
-│   └── 原型/
-│       └── FlowMind AI HTML页面原型.html
-└── docker-compose.yml
+├── flowmind-server/      # Spring Boot 后端
+├── flowmind-web/         # Vue 前端
+├── docs/                 # 制度样例、MVP 跑通文档、录屏脚本
+├── image/                # README 图片与视觉素材
+├── data/                 # 本地开发数据
+├── 需求文档/             # 产品、技术、接口和原型文档
+└── docker-compose.yml    # 本地基础设施
 ```
 
-## 开发原则
+## 关键文档
 
-### 后端原则
+- [docs/最小MVP跑通流程文档.md](docs/最小MVP跑通流程文档.md)
+- [docs/录屏脚本文档.md](docs/录屏脚本文档.md)
+- [需求文档/FlowMind AI 核心模型与产品规划文档.md](需求文档/FlowMind%20AI%20核心模型与产品规划文档.md)
+- [需求文档/FlowMind AI 前后端接口文档.md](需求文档/FlowMind%20AI%20前后端接口文档.md)
 
-- 参考阿里巴巴 Java 代码规范。
-- 领域对象、服务、策略和适配器边界清晰。
-- 对字段、表单、流程、节点、实例等核心对象使用版本化设计。
-- 对 AI、RAGFlow、通知等外部能力保留 Adapter 层，便于后续替换。
-- 对审批动作使用统一模型，避免每个按钮单独设计一套接口。
-- 重要行为必须记录审计日志。
+## 当前状态
 
-### 前端原则
-
-- 页面必须先满足业务可用性，再考虑视觉表现。
-- 管理页面采用稳定、清晰、可扫描的高端企业后台风格，主色统一为 `#165DFF`。
-- 组件尽量复用，例如列表页、查询区、表单项、属性面板、分页、弹窗、二次确认、运行态表单。
-- 表单设计器和工作流设计器要强化拖拽、绑定、校验、发布前检查和版本快照。
-- 待审批、已审批、查看页面必须通过后端返回的关键 ID 渲染正确的历史表单版本。
-
-## 里程碑规划
-
-### 第一阶段：产品模型与原型确认
-
-- 明确顶部导航和二级导航。
-- 明确字段、表单、工作流、实例、任务、权限、AI 审计等核心对象。
-- 输出数据库表设计。
-- 输出 HTML 页面原型。
-- 确认列表页、设计器、审批页和权限页的交互。
-
-### 第二阶段：后端领域模型重构
-
-- 建立核心表结构。
-- 实现用户、角色、菜单权限。
-- 实现字段、表单、表单版本。
-- 实现流程定义、工作流版本、节点和连线。
-- 实现统一流程动作接口。
-- 实现审批任务、实例追踪和审计日志。
-
-### 第三阶段：前端页面开发
-
-- 搭建统一布局、顶部导航和动态左侧菜单。
-- 实现管理页通用列表模板。
-- 实现字段管理、表单管理和流程管理。
-- 实现表单设计器。
-- 实现工作流设计器。
-- 实现待审批、已审批、发起审批和运行态表单。
-- 实现用户、角色和菜单权限管理。
-
-### 第四阶段：AI 与 RAG 增强
-
-- 接入自研 RAG Pipeline。
-- 实现制度检索、来源引用和风险依据展示。
-- 实现 AI 风险检测节点。
-- 实现风险评分驱动的条件路由。
-- 补充 RAGFlow Adapter。
-
-### 第五阶段：审计、测试与发布
-
-- 完善审批动作日志。
-- 完善 AI 审计日志。
-- 完善表单版本和流程版本回放。
-- 补充单元测试、集成测试和端到端测试。
-- 完成本地运行文档和部署文档。
-
-## 文档索引
-
-- 产品需求：`需求文档/FlowMind AI 产品需求文档.md`
-- V1 梳理：`需求文档/FlowMind AI V1产品需求梳理.md`
-- 技术设计：`需求文档/技术设计文档.md`
-- 核心模型与表设计：`需求文档/FlowMind AI 核心模型与产品规划文档.md`
-- 原型设计说明：`需求文档/FlowMind AI 原型设计说明.md`
-- HTML 页面原型：`需求文档/原型/FlowMind AI HTML页面原型.html`
-- 前后端接口文档：`需求文档/FlowMind AI 前后端接口文档.md`
-
-## 当前状态说明
-
-当前重点是先把核心对象、数据库模型、页面原型和交互边界定清楚。后续真正开发时，需要按照新的产品文档重新核对现有 `flowmind-server` 和 `flowmind-web` 目录中的实现，保留可复用部分，重构不符合新模型的功能。
+- 已完成：流程/表单/审批/知识库/RAG/AI 风险判断的 MVP 主链路。
+- 可演示：信贷审批流程、表单设计、工作流设计、RAG 问答与来源引用。
+- 下一步：补齐测试、部署说明、权限细节和更多审批场景模板。
